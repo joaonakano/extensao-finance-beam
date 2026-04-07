@@ -20,3 +20,11 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   // You can expose other APTs you need here.
   // ...
 });
+electron.contextBridge.exposeInMainWorld("api", {
+  gastos: {
+    getAll: () => electron.ipcRenderer.invoke("gastos:getAll"),
+    getById: (id) => electron.ipcRenderer.invoke("gastos:getById", id),
+    create: (gasto) => electron.ipcRenderer.invoke("gastos:create", gasto),
+    delete: (id) => electron.ipcRenderer.invoke("gastos:delete", id)
+  }
+});

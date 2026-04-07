@@ -22,3 +22,17 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   // You can expose other APTs you need here.
   // ...
 })
+
+contextBridge.exposeInMainWorld('api', {
+  gastos: {
+    getAll: () => ipcRenderer.invoke('gastos:getAll'),
+    getById: (id: number) => ipcRenderer.invoke('gastos:getById', id),
+    create: (gasto: {
+      descricao: string
+      total: number
+      categoria: string
+      data: string
+    }) => ipcRenderer.invoke('gastos:create', gasto),
+    delete: (id: number) => ipcRenderer.invoke('gastos:delete', id),
+  }
+})
