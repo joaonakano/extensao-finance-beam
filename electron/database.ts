@@ -35,7 +35,7 @@ function setupDatabase() {
 // Funções de Inicialização e Consulta
 function setupExpensesHandlers() {
     ipcMain.handle('gastos:getAll', () => {
-        return db.prepare('SELECT * FROM gastos ORDER BY date DESC').all()
+        return db.prepare('SELECT * FROM gastos ORDER BY data DESC').all()
     })
 
     ipcMain.handle('gastos:getById', (_, id: number) => {
@@ -47,7 +47,7 @@ function setupExpensesHandlers() {
             INSERT INTO gastos (descricao, total, categoria, data)
             VALUES (@descricao, @total, @categoria, @data)
         `)
-        const result = stmt.run(stmt)
+        const result = stmt.run(gasto)
         return { id: result.lastInsertRowid, ...gasto }
     })
 
