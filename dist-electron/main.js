@@ -1,3 +1,4 @@
+// Lógica pro DB
 import { app, ipcMain, BrowserWindow } from "electron";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
@@ -8,27 +9,101 @@ const Database = require$1("better-sqlite3");
 let db;
 function setupDatabase() {
   db.exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    `);
+  db.exec(`
         CREATE TABLE IF NOT EXISTS gastos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
             descricao TEXT NOT NULL,
             total REAL NOT NULL,
             categoria TEXT NOT NULL,
             data TEXT NOT NULL,
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `);
+  const demoExists = db.prepare("SELECT id FROM users WHERE email = ?").get("demo@example.com");
+  if (!demoExists) {
+    db.prepare("INSERT INTO users (nome, email, senha) VALUES (?, ?, ?)").run(
+      "Demo User",
+      "demo@example.com",
+      "demo123"
+    );
+  }
+}
+function setupAuthHandlers() {
+  ipcMain.handle("auth:login", (_, request) => {
+    try {
+      const user = db.prepare("SELECT * FROM users WHERE email = ? AND senha = ?").get(
+        request.email,
+        request.senha
+      );
+      if (user) {
+        return {
+          success: true,
+          user: {
+            id: user.id,
+            nome: user.nome,
+            email: user.email
+          }
+        };
+      }
+      return { success: false, error: "Email ou senha inválidos" };
+    } catch (error) {
+      console.error("Login error:", error);
+      return { success: false, error: "Erro ao fazer login" };
+    }
+  });
+  ipcMain.handle("auth:register", (_, request) => {
+    try {
+      const existingUser = db.prepare("SELECT id FROM users WHERE email = ?").get(request.email);
+      if (existingUser) {
+        return { success: false, error: "Email já cadastrado" };
+      }
+      const stmt = db.prepare(
+        "INSERT INTO users (nome, email, senha) VALUES (?, ?, ?)"
+      );
+      const result = stmt.run(request.nome, request.email, request.senha);
+      return {
+        success: true,
+        user: {
+          id: result.lastInsertRowid,
+          nome: request.nome,
+          email: request.email
+        }
+      };
+    } catch (error) {
+      console.error("Register error:", error);
+      return { success: false, error: "Erro ao criar conta" };
+    }
+  });
+  ipcMain.handle("auth:checkEmail", (_, email) => {
+    try {
+      const user = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
+      return { exists: !!user };
+    } catch (error) {
+      return { exists: false };
+    }
+  });
 }
 function setupExpensesHandlers() {
-  ipcMain.handle("gastos:getAll", () => {
-    return db.prepare("SELECT * FROM gastos ORDER BY data DESC").all();
+  ipcMain.handle("gastos:getAll", (_, userId) => {
+    return db.prepare("SELECT * FROM gastos WHERE user_id = ? ORDER BY data DESC").all(userId);
   });
   ipcMain.handle("gastos:getById", (_, id) => {
     return db.prepare("SELECT * FROM gastos WHERE id = ?").get(id);
   });
   ipcMain.handle("gastos:create", (_, gasto) => {
     const stmt = db.prepare(`
-            INSERT INTO gastos (descricao, total, categoria, data)
-            VALUES (@descricao, @total, @categoria, @data)
+            INSERT INTO gastos (user_id, descricao, total, categoria, data)
+            VALUES (@user_id, @descricao, @total, @categoria, @data)
         `);
     const result = stmt.run(gasto);
     return { id: result.lastInsertRowid, ...gasto };
@@ -42,6 +117,7 @@ function initDatabase() {
   const dbPath = path.join(app.getPath("userData"), "finance.db");
   db = new Database(dbPath);
   setupDatabase();
+  setupAuthHandlers();
   setupExpensesHandlers();
 }
 const __dirname$1 = path$1.dirname(fileURLToPath(import.meta.url));

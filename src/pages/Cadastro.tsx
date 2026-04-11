@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RegisterResponse, CheckEmailResponse } from "../types/api";
 
 interface CadastroForm {
   nome: string;
@@ -12,6 +13,7 @@ interface CadastroErrors {
   email?: string;
   senha?: string;
   confirmarSenha?: string;
+  geral?: string;
 }
 
 interface Props {
@@ -48,7 +50,7 @@ export function Cadastro({ onCadastro, onIrParaLogin }: Props) {
 
   const forcaSenha = getForcaSenha(form.senha);
 
-  function validar(): boolean {
+  async function validar(): Promise<boolean> {
     const novosErros: CadastroErrors = {};
 
     if (!form.nome.trim()) {
@@ -63,6 +65,16 @@ export function Cadastro({ onCadastro, onIrParaLogin }: Props) {
       novosErros.email = "E-mail é obrigatório.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       novosErros.email = "Informe um e-mail válido.";
+    } else {
+      // Verificar se email já existe
+      try {
+        const response: CheckEmailResponse = await window.api.auth.checkEmail(form.email);
+        if (response.exists) {
+          novosErros.email = "Este e-mail já está cadastrado.";
+        }
+      } catch (error) {
+        console.error("Erro ao verificar email:", error);
+      }
     }
 
     if (!form.senha) {
@@ -91,13 +103,32 @@ export function Cadastro({ onCadastro, onIrParaLogin }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validar()) return;
+    if (!(await validar())) return;
 
     setLoading(true);
-    // Simula criação de conta
-    await new Promise((res) => setTimeout(res, 900));
-    setLoading(false);
-    onCadastro();
+    setErrors({});
+
+    try {
+      const response: RegisterResponse = await window.api.auth.register(
+        form.nome,
+        form.email,
+        form.senha
+      );
+
+      if (response.success) {
+        // Cadastro bem-sucedido
+        setTimeout(() => {
+          onCadastro();
+        }, 1500);
+      } else {
+        setErrors({ geral: response.error || "Erro ao criar conta" });
+      }
+    } catch (error) {
+      console.error("Erro ao cadastrar:", error);
+      setErrors({ geral: "Erro ao conectar com o servidor" });
+    } finally {
+      setLoading(false);
+    }
   }
 
   const inputBase =
@@ -137,10 +168,30 @@ export function Cadastro({ onCadastro, onIrParaLogin }: Props) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Cadastro</h1>
-          <p className="text-sm text-gray-500 mt-1">Teste demo</p>
+          <p className="text-sm text-gray-500 mt-1">Finance Beam</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          {/* Erro Geral */}
+          {errors.geral && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm text-red-700">{errors.geral}</span>
+            </div>
+          )}
+
+          {/* Sucesso */}
+          {!loading && !errors.geral && Object.keys(errors).length === 0 && form.email && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+              <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm text-green-700">Cadastro realizado com sucesso!</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
 
             <div>

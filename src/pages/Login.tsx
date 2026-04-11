@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LoginResponse } from "../types/api";
 
 interface LoginForm {
   email: string;
@@ -8,10 +9,11 @@ interface LoginForm {
 interface LoginErrors {
   email?: string;
   senha?: string;
+  geral?: string;
 }
 
 interface Props {
-  onLogin: () => void;
+  onLogin: (user: { id: number; nome: string; email: string }) => void;
   onIrParaCadastro: () => void;
 }
 
@@ -42,8 +44,8 @@ export function Login({ onLogin, onIrParaCadastro }: Props) {
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value })); 
-    if (errors[name as keyof LoginErrors]) { // Limpa o campo em caso de erro
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof LoginErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   }
@@ -52,10 +54,26 @@ export function Login({ onLogin, onIrParaCadastro }: Props) {
     e.preventDefault();
     if (!validar()) return;
 
-    setLoading(true); // simula a autenticacao
-    await new Promise((res) => setTimeout(res, 800));
-    setLoading(false);
-    onLogin();
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const response: LoginResponse = await window.api.auth.login(
+        form.email,
+        form.senha
+      );
+
+      if (response.success && response.user) {
+        onLogin(response.user);
+      } else {
+        setErrors({ geral: response.error || "Erro ao fazer login" });
+      }
+    } catch (error) {
+      console.error("Erro ao fazer login:", error);
+      setErrors({ geral: "Erro ao conectar com o servidor" });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -79,10 +97,20 @@ export function Login({ onLogin, onIrParaCadastro }: Props) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Bem vindo</h1>
-          <p className="text-sm text-gray-500 mt-1">Teste demo</p>
+          <p className="text-sm text-gray-500 mt-1">Finance Beam</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          {/* Erro Geral */}
+          {errors.geral && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm text-red-700">{errors.geral}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
 
             <div>

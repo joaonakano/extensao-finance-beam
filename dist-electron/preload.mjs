@@ -21,8 +21,13 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   // ...
 });
 electron.contextBridge.exposeInMainWorld("api", {
+  auth: {
+    login: (email, senha) => electron.ipcRenderer.invoke("auth:login", { email, senha }),
+    register: (nome, email, senha) => electron.ipcRenderer.invoke("auth:register", { nome, email, senha }),
+    checkEmail: (email) => electron.ipcRenderer.invoke("auth:checkEmail", email)
+  },
   gastos: {
-    getAll: () => electron.ipcRenderer.invoke("gastos:getAll"),
+    getAll: (userId) => electron.ipcRenderer.invoke("gastos:getAll", userId),
     getById: (id) => electron.ipcRenderer.invoke("gastos:getById", id),
     create: (gasto) => electron.ipcRenderer.invoke("gastos:create", gasto),
     delete: (id) => electron.ipcRenderer.invoke("gastos:delete", id)
