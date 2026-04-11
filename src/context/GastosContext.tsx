@@ -12,6 +12,7 @@ interface GastosContextType {
     gastos: Gasto[]
     loading: boolean
     error: string | null
+    userId: number
     createGasto: (gasto: Omit<Gasto, 'id'>) => Promise<void>
     deleteGasto: (id: number) => Promise<void>
     refreshGastos: () => Promise<void>
@@ -19,7 +20,12 @@ interface GastosContextType {
 
 const GastosContext = createContext<GastosContextType | null>(null)
 
-export function GastosProvider({ children }: { children: ReactNode }) {
+interface GastosProviderProps {
+    children: ReactNode
+    userId: number
+}
+
+export function GastosProvider({ children, userId }: GastosProviderProps) {
     const [gastos, setGastos] = useState<Gasto[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -28,7 +34,7 @@ export function GastosProvider({ children }: { children: ReactNode }) {
         try {
             setLoading(true)
             setError(null)
-            const data = await window.api.gastos.getAll()
+            const data = await window.api.gastos.getAll(userId)
             setGastos(data)
         } catch (err) {
             setError('Erro ao carregar gastos')
@@ -41,7 +47,7 @@ export function GastosProvider({ children }: { children: ReactNode }) {
     async function createGasto(gasto: Omit<Gasto, 'id'>) {
         try {
             setError(null)
-            await window.api.gastos.create(gasto)
+            await window.api.gastos.create({ ...gasto, user_id: userId })
             await refreshGastos()   // atualizar lista após criar gasto
         } catch (err) {
             setError('Erro ao criar gasto')
@@ -62,14 +68,15 @@ export function GastosProvider({ children }: { children: ReactNode }) {
 
     // Carregar os Gastos logo na Montagem da Pagina
     useEffect(() => {
-        refreshGastos
-    }, [])
+        refreshGastos()
+    }, [userId])
 
     return (
         <GastosContext.Provider value={{
             gastos,
             loading,
             error,
+            userId,
             createGasto,
             deleteGasto,
             refreshGastos

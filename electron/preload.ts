@@ -24,14 +24,23 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 })
 
 contextBridge.exposeInMainWorld('api', {
+  auth: {
+    login: (email: string, senha: string) =>
+      ipcRenderer.invoke('auth:login', { email, senha }),
+    register: (nome: string, email: string, senha: string) =>
+      ipcRenderer.invoke('auth:register', { nome, email, senha }),
+    checkEmail: (email: string) =>
+      ipcRenderer.invoke('auth:checkEmail', email),
+  },
   gastos: {
-    getAll: () => ipcRenderer.invoke('gastos:getAll'),
+    getAll: (userId: number) => ipcRenderer.invoke('gastos:getAll', userId),
     getById: (id: number) => ipcRenderer.invoke('gastos:getById', id),
     create: (gasto: {
       descricao: string
       total: number
       categoria: string
       data: string
+      user_id: number
     }) => ipcRenderer.invoke('gastos:create', gasto),
     delete: (id: number) => ipcRenderer.invoke('gastos:delete', id),
   }
