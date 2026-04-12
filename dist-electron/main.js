@@ -1,4 +1,3 @@
-// Lógica pro DB
 import { app, ipcMain, BrowserWindow } from "electron";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
