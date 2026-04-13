@@ -1,8 +1,8 @@
 # Projeto de Extensão: Finance Beam
 
-A proposta do presente projeto é a entrega final de software para auxiliar os processos internos da empresa Faça a Festa, de Guarapuava - PR, como objetivo avaliativo da disciplina de Extensão do 7° Período do curso de Engenharia de Software, Centro Universitário Campo Real.
+  A proposta do presente projeto é a entrega final de software para auxiliar os processos internos da empresa Faça a Festa, de Guarapuava - PR, como objetivo avaliativo da disciplina de Extensão do 7° Período do curso de Engenharia de Software, Centro Universitário Campo Real.
 
-A ideia central é auxiliar no controle de gastos da empresa através de software instalado localmente nas máquinas do cliente. O controle de gastos será feito através da criação e acompanhamento do módulo de Contas a Pagar.
+  A ideia central é auxiliar no controle de gastos da empresa através de software instalado localmente nas máquinas do cliente. O controle de gastos será feito através da criação e acompanhamento do módulo de Contas a Pagar.
 
 ## Requisitos 
 
