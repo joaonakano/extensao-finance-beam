@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react'
 import { Gastos } from './pages/Gastos'
+import { Dashboard } from './pages/Dashboard'
 import { Login } from './pages/Login'
 import { Cadastro } from './pages/Cadastro'
+import { Sidebar } from './components/Sidebar'
 import { GastosProvider } from './context/GastosContext'
 import { User } from './types/api'
 import './App.css'
 
 type Tela = 'login' | 'cadastro' | 'app'
+type Pagina = 'dashboard' | 'gastos'
 
 function App() {
   const [tela, setTela] = useState<Tela>('login')
+  const [paginaAtual, setPaginaAtual] = useState<Pagina>('dashboard')
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -32,6 +36,7 @@ function App() {
   const handleLogin = (userData: User) => {
     setUser(userData)
     setTela('app')
+    setPaginaAtual('dashboard')
     // Salvar sessão localmente
     localStorage.setItem('user', JSON.stringify(userData))
   }
@@ -43,6 +48,7 @@ function App() {
   const handleLogout = () => {
     setUser(null)
     setTela('login')
+    setPaginaAtual('dashboard')
     localStorage.removeItem('user')
   }
 
@@ -76,37 +82,26 @@ function App() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-100'>
-      {/* Header com logout */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-              {user?.email?.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-blue-600">Finance Beam</h1>
-              <p className="text-xs text-gray-500">Bem-vindo, {user?.nome}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-700 text-sm">{user?.email}</span>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition font-semibold"
-            >
-              Sair
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className='min-h-screen bg-gray-50 flex'>
+      {/* Sidebar */}
+      {user && (
+        <Sidebar 
+          userName={user.nome} 
+          onLogout={handleLogout}
+          currentPage={paginaAtual}
+          onPageChange={setPaginaAtual}
+        />
+      )}
 
       {/* Conteúdo Principal */}
-      {user && (
-        <GastosProvider userId={user.id}>
-          <Gastos />
-        </GastosProvider>
-      )}
+      <div className='flex-1 flex flex-col'>
+        {user && (
+          <GastosProvider userId={user.id}>
+            {paginaAtual === 'dashboard' && <Dashboard />}
+            {paginaAtual === 'gastos' && <Gastos />}
+          </GastosProvider>
+        )}
+      </div>
     </div>
   )
 }

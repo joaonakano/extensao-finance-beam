@@ -11,7 +11,11 @@ const CATEGORIAS = [
     'Outros',
 ]
 
-export function GastosForm() {
+interface GastosFormProps {
+    onSuccess?: () => void
+}
+
+export function GastosForm({ onSuccess }: GastosFormProps) {
     const { createGasto } = useGastos()
     const [form, setForm] = useState({
         descricao: '',
@@ -37,10 +41,11 @@ export function GastosForm() {
 
         // Resetar formulario
         setForm({ descricao: '', total: '', categoria: '', data: '' })
+        onSuccess?.()
     }
 
     return(
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg border border-gray-200">
+        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Novo Gasto</h2>
 
             <div className="grid grid-cols-2 gap-4">
@@ -104,4 +109,3 @@ export function GastosForm() {
         </form>
     )
 }
-
