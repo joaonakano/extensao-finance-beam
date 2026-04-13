@@ -25,13 +25,59 @@ export function GastosForm({ onSuccess }: GastosFormProps) {
         pago: 0,
     })
 
+    const [errors, setErrors] = useState({
+        descricao: '',
+        total: '',
+        categoria: '',
+        data: '',
+    })
+
+    function validate() {
+        const newErrors = { descricao: '', total: '', categoria: '', data: '' }
+        let valid = true
+
+        if (!form.descricao.trim()) {
+            newErrors.descricao = 'Descrição é obrigatória'
+            valid = false
+        }
+
+        if (!form.total || parseFloat(form.total) <= 0) {
+            newErrors.total = 'Total deve ser maior que zero'
+            valid = false
+        }
+
+        if (!form.categoria.trim()) {
+            newErrors.categoria = 'Categoria é obrigatória'
+            valid = false
+        }
+
+        if (!form.data) {
+            newErrors.data = 'Data é obrigatória'
+            valid = false
+        } else {
+            const data = new Date(form.data)
+            const dataMin = new Date('1900-01-01')
+            
+            if (isNaN(data.getTime())) {
+                newErrors.data = 'Data inválida'
+                valid = false
+            } else if (data < dataMin) {
+                newErrors.data = 'Data muito antiga, insira uma data válida'
+                valid = false
+            }
+        }
+
+        setErrors(newErrors)
+        return valid
+    }
+
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
         setForm({ ...form, [e.target.name]: e.target.value })
     }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
-        if (!form.descricao || !form.total || !form.categoria || !form.data) return
+        if (!validate()) return
 
         await createGasto({
             descricao: form.descricao,
@@ -42,6 +88,7 @@ export function GastosForm({ onSuccess }: GastosFormProps) {
         })
 
         // Resetar formulario
+        setErrors({ descricao: '', total: '', categoria: '', data: '' })
         setForm({ descricao: '', total: '', categoria: '', data: '', pago: 1 })
         onSuccess?.()
     }
@@ -56,6 +103,9 @@ export function GastosForm({ onSuccess }: GastosFormProps) {
                         Descrição
                     </label>
                     <input type="text" name="descricao" value={form.descricao} onChange={handleChange} placeholder="Ex: Compra de Material" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></input>
+                    {errors.descricao && (
+                        <p className="text-red-500 text-xs mt-1">{errors.descricao}</p>
+                    )}
                 </div>
 
                 <div>
@@ -71,7 +121,11 @@ export function GastosForm({ onSuccess }: GastosFormProps) {
                         min="0"
                         step="0.01"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onKeyDown={(e) => ['-', 'e', 'E', '+'].includes(e.key) && e.preventDefault()}
                     />
+                    {errors.total && (
+                        <p className="text-red-500 text-xs mt-1">{errors.total}</p>
+                    )}
                 </div>
 
                 <div>
@@ -88,6 +142,9 @@ export function GastosForm({ onSuccess }: GastosFormProps) {
                         <option key={cat} value={cat}>{cat}</option>
                         ))}
                     </select>
+                    {errors.categoria && (
+                        <p className="text-red-500 text-xs mt-1">{errors.categoria}</p>
+                    )}
                 </div>
 
                 <div className="col-span-2">
@@ -100,6 +157,9 @@ export function GastosForm({ onSuccess }: GastosFormProps) {
                         value={form.data}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                    {errors.data && (
+                        <p className="text-red-500 text-xs mt-1">{errors.data}</p>
+                    )}
                 </div>
 
                 <div className="col-span-2 flex items-center justify-center gap-2">
