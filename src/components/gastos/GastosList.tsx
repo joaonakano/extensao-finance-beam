@@ -34,6 +34,7 @@ export function GastosList({ onDelete }: Props) {
                         <th className="px-6 py-3">Categoria</th>
                         <th className="px-6 py-3">Data</th>
                         <th className="px-6 py-3">Total</th>
+                        <th className="px-6 py-3">Pago</th>
                         <th className="px-6 py-3">Ações</th>
                     </tr>
                 </thead>
@@ -42,9 +43,14 @@ export function GastosList({ onDelete }: Props) {
                         <tr key={gasto.id} className="bg-white hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4 font-medium text-gray-900">{gasto.descricao}</td>
                             <td className="px-6 py-4 text-gray-600">{gasto.categoria}</td>
-                            <td className="px-6 py-4 text-gray-600">{gasto.data}</td>
+                            <td className="px-6 py-4 text-gray-600">{new Date(gasto.data + "T00:00:00").toLocaleDateString('pt-BR')}</td>
                             <td className="px-6 py-4 text-gray-900 font-medium">
                                 {gasto.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}
+                            </td>
+                            <td className="px-6 py-4">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${gasto.pago === 1 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                                    {gasto.pago === 1 ? 'Pago' : 'Não Pago'}
+                                </span>
                             </td>
                             <td className="px-6 py-4">
                                 <button

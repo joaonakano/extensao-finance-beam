@@ -22,6 +22,7 @@ export function GastosForm({ onSuccess }: GastosFormProps) {
         total: '',
         categoria: '',
         data: '',
+        pago: 0,
     })
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -37,10 +38,11 @@ export function GastosForm({ onSuccess }: GastosFormProps) {
             total: parseFloat(form.total),
             categoria: form.categoria,
             data: form.data,
+            pago: form.pago,
         })
 
         // Resetar formulario
-        setForm({ descricao: '', total: '', categoria: '', data: '' })
+        setForm({ descricao: '', total: '', categoria: '', data: '', pago: 1 })
         onSuccess?.()
     }
 
@@ -98,6 +100,11 @@ export function GastosForm({ onSuccess }: GastosFormProps) {
                         value={form.data}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                </div>
+
+                <div className="col-span-2 flex items-center justify-center gap-2">
+                    <input type="checkbox" id="pago" checked={form.pago == 1} onChange={(e) => setForm({ ...form, pago: e.target.checked ? 1 : 0 })} className="w-4 h-4 accent-blue-600"/>
+                    <label htmlFor="pago" className="text-sm font-medium text-gray-700">Pago</label>
                 </div>
             </div>
 

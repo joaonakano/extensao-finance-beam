@@ -24,10 +24,15 @@ function setupDatabase() {
             total REAL NOT NULL,
             categoria TEXT NOT NULL,
             data TEXT NOT NULL,
+            pago INTEGER NOT NULL DEFAULT 0,
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `);
+  try {
+    db.exec(`ALTER TABLE gastos ADD COLUMN pago INTEGER NOT NULL DEFAULT 0`);
+  } catch {
+  }
   const demoExists = db.prepare("SELECT id FROM users WHERE email = ?").get("demo@example.com");
   if (!demoExists) {
     db.prepare("INSERT INTO users (nome, email, senha) VALUES (?, ?, ?)").run(
@@ -101,14 +106,20 @@ function setupExpensesHandlers() {
   });
   ipcMain.handle("gastos:create", (_, gasto) => {
     const stmt = db.prepare(`
-            INSERT INTO gastos (user_id, descricao, total, categoria, data)
-            VALUES (@user_id, @descricao, @total, @categoria, @data)
+            INSERT INTO gastos (user_id, descricao, total, categoria, data, pago)
+            VALUES (@user_id, @descricao, @total, @categoria, @data, @pago)
         `);
     const result = stmt.run(gasto);
     return { id: result.lastInsertRowid, ...gasto };
   });
   ipcMain.handle("gastos:delete", (_, id) => {
     db.prepare("DELETE FROM gastos WHERE id = ?").run(id);
+    return { success: true };
+  });
+  ipcMain.handle("gastos:togglePago", (_, id) => {
+    db.prepare(`
+            UPDATE gastos SET pago = CASE WHEN pago = 1 THEN 0 ELSE 1 END WHERE id = ?
+        `).run(id);
     return { success: true };
   });
 }

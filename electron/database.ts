@@ -14,6 +14,7 @@ interface Gasto {
     total: number
     categoria: string
     data: string
+    pago?: number
     user_id?: number
 }
 
@@ -60,10 +61,17 @@ function setupDatabase() {
             total REAL NOT NULL,
             categoria TEXT NOT NULL,
             data TEXT NOT NULL,
+            pago INTEGER NOT NULL DEFAULT 0,
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `)
+
+    try {
+        db.exec(`ALTER TABLE gastos ADD COLUMN pago INTEGER NOT NULL DEFAULT 0`)
+    } catch {
+        // coluna já adicionada, ignorandoo
+    }
 
     // User Demo de testes
     const demoExists = db.prepare('SELECT id FROM users WHERE email = ?').get('demo@example.com')
@@ -152,8 +160,8 @@ function setupExpensesHandlers() {
 
     ipcMain.handle('gastos:create', (_, gasto: Gasto & { user_id: number }) => {
         const stmt = db.prepare(`
-            INSERT INTO gastos (user_id, descricao, total, categoria, data)
-            VALUES (@user_id, @descricao, @total, @categoria, @data)
+            INSERT INTO gastos (user_id, descricao, total, categoria, data, pago)
+            VALUES (@user_id, @descricao, @total, @categoria, @data, @pago)
         `)
         const result = stmt.run(gasto)
         return { id: result.lastInsertRowid, ...gasto }
@@ -161,6 +169,14 @@ function setupExpensesHandlers() {
 
     ipcMain.handle('gastos:delete', (_, id: number) => {
         db.prepare('DELETE FROM gastos WHERE id = ?').run(id)
+        return { success: true }
+    })
+
+    // pago = 0, nao pago = 1
+    ipcMain.handle('gastos:togglePago', (_, id: number) => {
+        db.prepare(`
+            UPDATE gastos SET pago = CASE WHEN pago = 1 THEN 0 ELSE 1 END WHERE id = ?
+        `).run(id)
         return { success: true }
     })
 }

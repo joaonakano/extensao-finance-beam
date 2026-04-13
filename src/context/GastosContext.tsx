@@ -6,6 +6,7 @@ interface Gasto {
     total: number
     categoria: string
     data: string
+    pago?: number
 }
 
 interface GastosContextType {
