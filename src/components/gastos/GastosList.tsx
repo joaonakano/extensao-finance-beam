@@ -43,7 +43,7 @@ export function GastosList({ onDelete }: Props) {
                         <tr key={gasto.id} className="bg-white hover:bg-gray-50 transition-colors">
                             <td className="px-6 py-4 font-medium text-gray-900">{gasto.descricao}</td>
                             <td className="px-6 py-4 text-gray-600">{gasto.categoria}</td>
-                            <td className="px-6 py-4 text-gray-600">{gasto.data}</td>
+                            <td className="px-6 py-4 text-gray-600">{new Date(gasto.data + "T00:00:00").toLocaleDateString('pt-BR')}</td>
                             <td className="px-6 py-4 text-gray-900 font-medium">
                                 {gasto.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}
                             </td>
