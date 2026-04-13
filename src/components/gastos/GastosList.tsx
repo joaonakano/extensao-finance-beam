@@ -34,7 +34,7 @@ export function GastosList({ onDelete }: Props) {
                         <th className="px-6 py-3">Categoria</th>
                         <th className="px-6 py-3">Data</th>
                         <th className="px-6 py-3">Total</th>
-                        <th className="px-6 py-3">Pago</th>
+                        <th className="px-6 py-3">Status</th>
                         <th className="px-6 py-3">Ações</th>
                     </tr>
                 </thead>
