@@ -3,8 +3,8 @@ import { useState } from 'react'
 interface SidebarProps {
   userName: string
   onLogout: () => void
-  currentPage: 'dashboard' | 'gastos'
-  onPageChange: (page: 'dashboard' | 'gastos') => void
+  currentPage: 'dashboard' | 'gastos' | 'meios-pagamento'
+  onPageChange: (page: 'dashboard' | 'gastos' | 'meios-pagamento') => void
 }
 
 export function Sidebar({ userName, onLogout, currentPage, onPageChange }: SidebarProps) {
@@ -13,6 +13,7 @@ export function Sidebar({ userName, onLogout, currentPage, onPageChange }: Sideb
   const menuItems = [
     { label: 'Dashboard', icon: '📊', page: 'dashboard' as const },
     { label: 'Gastos', icon: '💸', page: 'gastos' as const },
+    { label: 'Meios de Pagamento', icon: '💳', page: 'meios-pagamento' as const },
     { label: 'Clientes', icon: '👥', page: 'dashboard' as const, disabled: true },
     { label: 'Relatórios', icon: '📈', page: 'dashboard' as const, disabled: true },
     { label: 'Configurações', icon: '⚙️', page: 'dashboard' as const, disabled: true },

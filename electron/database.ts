@@ -73,6 +73,19 @@ function setupDatabase() {
         // coluna já adicionada, ignorandoo
     }
 
+    // Tabela de Meios de Pagamento
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS meios_pagamento (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            descricao TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'ativo',
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `)
+
     // User Demo de testes
     const demoExists = db.prepare('SELECT id FROM users WHERE email = ?').get('demo@example.com')
     if (!demoExists) {
@@ -181,6 +194,89 @@ function setupExpensesHandlers() {
     })
 }
 
+// Entidade MeioPagamento
+interface MeioPagamento {
+    id?: number
+    user_id: number
+    descricao: string
+    tipo: string
+    status: 'ativo' | 'inativo'
+}
+
+function setupMeiosPagamentoHandlers() {
+    ipcMain.handle('meiosPagamento:getAll', (_, userId: number) => {
+        return db.prepare('SELECT * FROM meios_pagamento WHERE user_id = ? ORDER BY created_at DESC').all(userId)
+    })
+
+    ipcMain.handle('meiosPagamento:create', (_, meio: MeioPagamento) => {
+        const stmt = db.prepare(`
+            INSERT INTO meios_pagamento (user_id, descricao, tipo, status)
+            VALUES (@user_id, @descricao, @tipo, @status)
+        `)
+        const result = stmt.run(meio)
+        return { success: true, id: result.lastInsertRowid, ...meio }
+    })
+
+    ipcMain.handle('meiosPagamento:update', (_, meio: MeioPagamento & { id: number }) => {
+        try {
+            db.prepare(`
+                UPDATE meios_pagamento
+                SET descricao = @descricao, tipo = @tipo, status = @status
+                WHERE id = @id
+            `).run(meio)
+            return { success: true }
+        } catch (error) {
+            console.error('Update meio error:', error)
+            return { success: false, error: 'Erro ao atualizar meio de pagamento' }
+        }
+    })
+
+    ipcMain.handle('meiosPagamento:toggleStatus', (_, id: number) => {
+        try {
+            db.prepare(`
+                UPDATE meios_pagamento
+                SET status = CASE WHEN status = 'ativo' THEN 'inativo' ELSE 'ativo' END
+                WHERE id = ?
+            `).run(id)
+            return { success: true }
+        } catch (error) {
+            console.error('Toggle status error:', error)
+            return { success: false, error: 'Erro ao alterar status' }
+        }
+    })
+
+    // US013: Só remove se não houver transações vinculadas
+    ipcMain.handle('meiosPagamento:delete', (_, id: number) => {
+        try {
+            // Verificar se existe FK de gastos (caso a tabela gastos tenha meio_pagamento_id no futuro)
+            // Por ora verificamos pela coluna meio_pagamento_id em gastos, se existir
+            let temTransacoes = false
+            try {
+                const count = db.prepare(
+                    'SELECT COUNT(*) as total FROM gastos WHERE meio_pagamento_id = ?'
+                ).get(id) as { total: number }
+                temTransacoes = count.total > 0
+            } catch {
+                // coluna meio_pagamento_id ainda não existe — pode excluir
+                temTransacoes = false
+            }
+
+            if (temTransacoes) {
+                return {
+                    success: false,
+                    error: 'Não é possível excluir: existem transações vinculadas a este meio de pagamento.'
+                }
+            }
+
+            db.prepare('DELETE FROM meios_pagamento WHERE id = ?').run(id)
+            return { success: true }
+        } catch (error) {
+            console.error('Delete meio error:', error)
+            return { success: false, error: 'Erro ao excluir meio de pagamento' }
+        }
+    })
+}
+
 // Inicializar Database
 export function initDatabase() {
     // Armazenando o Banco de Dados na appData do sistema
@@ -189,4 +285,5 @@ export function initDatabase() {
     setupDatabase()
     setupAuthHandlers()
     setupExpensesHandlers()
+    setupMeiosPagamentoHandlers()
 }

@@ -33,6 +33,17 @@ function setupDatabase() {
     db.exec(`ALTER TABLE gastos ADD COLUMN pago INTEGER NOT NULL DEFAULT 0`);
   } catch {
   }
+  db.exec(`
+        CREATE TABLE IF NOT EXISTS meios_pagamento (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            descricao TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'ativo',
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `);
   const demoExists = db.prepare("SELECT id FROM users WHERE email = ?").get("demo@example.com");
   if (!demoExists) {
     db.prepare("INSERT INTO users (nome, email, senha) VALUES (?, ?, ?)").run(
@@ -123,12 +134,76 @@ function setupExpensesHandlers() {
     return { success: true };
   });
 }
+function setupMeiosPagamentoHandlers() {
+  ipcMain.handle("meiosPagamento:getAll", (_, userId) => {
+    return db.prepare("SELECT * FROM meios_pagamento WHERE user_id = ? ORDER BY created_at DESC").all(userId);
+  });
+  ipcMain.handle("meiosPagamento:create", (_, meio) => {
+    const stmt = db.prepare(`
+            INSERT INTO meios_pagamento (user_id, descricao, tipo, status)
+            VALUES (@user_id, @descricao, @tipo, @status)
+        `);
+    const result = stmt.run(meio);
+    return { success: true, id: result.lastInsertRowid, ...meio };
+  });
+  ipcMain.handle("meiosPagamento:update", (_, meio) => {
+    try {
+      db.prepare(`
+                UPDATE meios_pagamento
+                SET descricao = @descricao, tipo = @tipo, status = @status
+                WHERE id = @id
+            `).run(meio);
+      return { success: true };
+    } catch (error) {
+      console.error("Update meio error:", error);
+      return { success: false, error: "Erro ao atualizar meio de pagamento" };
+    }
+  });
+  ipcMain.handle("meiosPagamento:toggleStatus", (_, id) => {
+    try {
+      db.prepare(`
+                UPDATE meios_pagamento
+                SET status = CASE WHEN status = 'ativo' THEN 'inativo' ELSE 'ativo' END
+                WHERE id = ?
+            `).run(id);
+      return { success: true };
+    } catch (error) {
+      console.error("Toggle status error:", error);
+      return { success: false, error: "Erro ao alterar status" };
+    }
+  });
+  ipcMain.handle("meiosPagamento:delete", (_, id) => {
+    try {
+      let temTransacoes = false;
+      try {
+        const count = db.prepare(
+          "SELECT COUNT(*) as total FROM gastos WHERE meio_pagamento_id = ?"
+        ).get(id);
+        temTransacoes = count.total > 0;
+      } catch {
+        temTransacoes = false;
+      }
+      if (temTransacoes) {
+        return {
+          success: false,
+          error: "Não é possível excluir: existem transações vinculadas a este meio de pagamento."
+        };
+      }
+      db.prepare("DELETE FROM meios_pagamento WHERE id = ?").run(id);
+      return { success: true };
+    } catch (error) {
+      console.error("Delete meio error:", error);
+      return { success: false, error: "Erro ao excluir meio de pagamento" };
+    }
+  });
+}
 function initDatabase() {
   const dbPath = path.join(app.getPath("userData"), "finance.db");
   db = new Database(dbPath);
   setupDatabase();
   setupAuthHandlers();
   setupExpensesHandlers();
+  setupMeiosPagamentoHandlers();
 }
 const __dirname$1 = path$1.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path$1.join(__dirname$1, "..");

@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Gastos } from './pages/Gastos'
 import { Dashboard } from './pages/Dashboard'
+import { MeiosPagamento } from './pages/MeiosPagamento'
 import { Login } from './pages/Login'
 import { Cadastro } from './pages/Cadastro'
 import { Sidebar } from './components/Sidebar'
 import { GastosProvider } from './context/GastosContext'
+import { MeiosPagamentoProvider } from './context/MeiosPagamentoContext'
 import { User } from './types/api'
 import './App.css'
 
 type Tela = 'login' | 'cadastro' | 'app'
-type Pagina = 'dashboard' | 'gastos'
+type Pagina = 'dashboard' | 'gastos' | 'meios-pagamento'
 
 function App() {
   const [tela, setTela] = useState<Tela>('login')
@@ -97,8 +99,11 @@ function App() {
       <div className='flex-1 flex flex-col'>
         {user && (
           <GastosProvider userId={user.id}>
-            {paginaAtual === 'dashboard' && <Dashboard />}
-            {paginaAtual === 'gastos' && <Gastos />}
+            <MeiosPagamentoProvider userId={user.id}>
+              {paginaAtual === 'dashboard' && <Dashboard />}
+              {paginaAtual === 'gastos' && <Gastos />}
+              {paginaAtual === 'meios-pagamento' && <MeiosPagamento />}
+            </MeiosPagamentoProvider>
           </GastosProvider>
         )}
       </div>

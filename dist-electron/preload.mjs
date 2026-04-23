@@ -31,5 +31,12 @@ electron.contextBridge.exposeInMainWorld("api", {
     getById: (id) => electron.ipcRenderer.invoke("gastos:getById", id),
     create: (gasto) => electron.ipcRenderer.invoke("gastos:create", gasto),
     delete: (id) => electron.ipcRenderer.invoke("gastos:delete", id)
+  },
+  meiosPagamento: {
+    getAll: (userId) => electron.ipcRenderer.invoke("meiosPagamento:getAll", userId),
+    create: (meio) => electron.ipcRenderer.invoke("meiosPagamento:create", meio),
+    update: (meio) => electron.ipcRenderer.invoke("meiosPagamento:update", meio),
+    toggleStatus: (id) => electron.ipcRenderer.invoke("meiosPagamento:toggleStatus", id),
+    delete: (id) => electron.ipcRenderer.invoke("meiosPagamento:delete", id)
   }
 });

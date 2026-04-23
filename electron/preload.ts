@@ -43,5 +43,22 @@ contextBridge.exposeInMainWorld('api', {
       user_id: number
     }) => ipcRenderer.invoke('gastos:create', gasto),
     delete: (id: number) => ipcRenderer.invoke('gastos:delete', id),
-  }
+  },
+  meiosPagamento: {
+    getAll: (userId: number) => ipcRenderer.invoke('meiosPagamento:getAll', userId),
+    create: (meio: {
+      descricao: string
+      tipo: string
+      status: string
+      user_id: number
+    }) => ipcRenderer.invoke('meiosPagamento:create', meio),
+    update: (meio: {
+      id: number
+      descricao: string
+      tipo: string
+      status: string
+    }) => ipcRenderer.invoke('meiosPagamento:update', meio),
+    toggleStatus: (id: number) => ipcRenderer.invoke('meiosPagamento:toggleStatus', id),
+    delete: (id: number) => ipcRenderer.invoke('meiosPagamento:delete', id),
+  },
 })
