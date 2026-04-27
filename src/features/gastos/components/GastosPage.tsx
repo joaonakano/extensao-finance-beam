@@ -11,10 +11,9 @@ export function GastosPage() {
 
   return (
     <div className="p-8 space-y-6">
-      <Button>Botao Oco COmprovando Cirgurgia ben susedida</Button>
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold tracking-tight">Fluxo de Caixa</h1>
-        {/* Aqui virá o botão de "Novo Gasto" */}
+        <Button>Novo Gasto</Button>
       </div>
 
       <div className="rounded-md border">

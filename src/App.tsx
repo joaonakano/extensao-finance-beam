@@ -1,3 +1,4 @@
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import './App.css'
 
 import { GastosPage } from './features/gastos/components/GastosPage'
@@ -16,14 +17,20 @@ Para melhorar o tratamento do app e não virar bola de neve, estão algumas muda
 
 */
 
+
+// 2. Crie a instância do cliente fora do componente
+const queryClient = new QueryClient()
+
 function App() {
   return (
-    <HashRouter>
-      <Routes>
-        <Route path='/' element={<Navigate to="/gastos" />} />
-        <Route path='/gastos' element={<GastosPage />} />
-      </Routes>
-    </HashRouter>
+    <QueryClientProvider client={queryClient}>
+      <HashRouter>
+        <Routes>
+          <Route path='/' element={<Navigate to="/gastos" />} />
+          <Route path='/gastos' element={<GastosPage />} />
+        </Routes>
+      </HashRouter>
+    </QueryClientProvider>
   )
 }
 
