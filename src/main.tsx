@@ -1,15 +1,25 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import { GastosProvider } from './context/GastosContext.tsx'
 import './index.css'
 
+// Configurando TanStack Query
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    }
+  }
+})
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <GastosProvider>
+    <QueryClientProvider client={queryClient}>
       <App />
-    </GastosProvider>
+    </QueryClientProvider>
   </React.StrictMode>,
 )
 

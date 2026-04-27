@@ -6,16 +6,36 @@ import path from 'path'
 const require = createRequire(import.meta.url)
 const Database = require('better-sqlite3')
 
-
 // Entidades
-interface Gasto {
+interface Expense {
     id?: number
-    descricao: string
-    total: number
-    categoria: string
-    data: string
-    pago?: number
-    user_id?: number
+    user_id: number
+    parent_id?: number | null
+    category_id?: number | null
+    payment_method_id?: number | null
+    description: string
+    amount: number
+    is_paid: number
+    is_recurring: number
+    recurrence_type?: string | null
+    date: string
+    payment_date?: string | null
+    notes?: string | null
+}
+
+interface Category {
+    id?: number
+    user_id: number
+    name: string
+    color?: string | null
+    icon?: string | null
+}
+
+interface PaymentMethod {
+    id?: number
+    user_id: number
+    name: string
+    type: string
 }
 
 interface User {
@@ -41,7 +61,7 @@ let db: ReturnType<typeof Database>
 
 // Setup
 function setupDatabase() {
-    // Tabela dos Users
+    // Tabela USERS - Usuários
     db.exec(`
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,33 +72,61 @@ function setupDatabase() {
         )
     `)
 
-    // Tabela de gastos com aforeign key
+    // Tabela PAYMENT METHODS - Meios de Pagamento (Cartão, Pix, Dinheiro, etc)
     db.exec(`
-        CREATE TABLE IF NOT EXISTS gastos (
+        CREATE TABLE IF NOT EXISTS payment_methods (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
-            descricao TEXT NOT NULL,
-            total REAL NOT NULL,
-            categoria TEXT NOT NULL,
-            data TEXT NOT NULL,
-            pago INTEGER NOT NULL DEFAULT 0,
+            name TEXT NOT NULL,             -- "Cartão Nubank", "Pix", "Dinheiro"
+            type TEXT NOT NULL,             -- "credito", "debito", "dinheiro", "pix"
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `)
 
-    try {
-        db.exec(`ALTER TABLE gastos ADD COLUMN pago INTEGER NOT NULL DEFAULT 0`)
-    } catch {
-        // coluna já adicionada, ignorandoo
-    }
+    // Tabela CATEGORIES - Categorias
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,     -- "Alimentação", "Transporte"
+            color TEXT,             -- "#FFFFFF", para mostrar na dashboard
+            icon TEXT,              -- nome do ícone lucide
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `)
+    
+    // Tabela EXPENSES - Gastos
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            parent_id INTEGER,                  -- NULL = pai, preenchido = filho
+            category_id INTEGER,                -- FK para tabela categories
+            payment_method_id INTEGER,          -- FK para tabela payment_methods
+            description TEXT NOT NULL,
+            amount REAL NOT NULL DEFAULT 0,
+            is_paid INTEGER NOT NULL DEFAULT 0,
+            is_recurring INTEGER NOT NULL DEFAULT 0,
+            recurrence_type TEXT,               -- "daily", "weekly", "monthly", "yearly"
+            date TEXT NOT NULL,
+            payment_date TEXT,
+            notes TEXT,                         -- campo livre para observações
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (parent_id) REFERENCES expenses(id) ON DELETE CASCADE,
+            FOREIGN KEY (category_id) REFERENCES categories(id),
+            FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id)
+        )
+    `)
 
     // User Demo de testes
-    const demoExists = db.prepare('SELECT id FROM users WHERE email = ?').get('demo@example.com')
+    const demoExists = db.prepare('SELECT id FROM users WHERE email = ?').get('demonstracao@gmail.com')
     if (!demoExists) {
         db.prepare('INSERT INTO users (nome, email, senha) VALUES (?, ?, ?)').run(
-            'Demo User',
-            'demo@example.com',
+            'Usuario Demonstração',
+            'demonstracao@gmail.com',
             'demo123'
         )
     }
@@ -150,33 +198,156 @@ function setupAuthHandlers() {
 
 // Funções de Inicialização e Consulta
 function setupExpensesHandlers() {
-    ipcMain.handle('gastos:getAll', (_, userId: number) => {
-        return db.prepare('SELECT * FROM gastos WHERE user_id = ? ORDER BY data DESC').all(userId)
+    // GET ALL (apenas pais, com total calculado dos filhos)
+    ipcMain.handle('expenses:getAll', (_, userId: number) => {
+        return db.prepare(`
+            SELECT
+                e.*,
+                c.name as category_name,
+                c.color as category_color,
+                pm.name as payment_method_name,
+                COALESCE(
+                    (SELECT SUM(f.amount) FROM expenses f WHERE f.parent_id = e.id),
+                    e.amount
+                ) as total
+            FROM expenses e
+            LEFT JOIN categories c ON c.id = e.category_id
+            LEFT JOIN payment_methods pm ON pm.id = e.payment_method_id
+            WHERE e.user_id = ?
+            AND e.parent_id IS NULL
+            ORDER BY e.date DESC
+        `).all(userId)
     })
 
-    ipcMain.handle('gastos:getById', (_, id: number) => {
-        return db.prepare('SELECT * FROM gastos WHERE id = ?').get(id)
+    // GET CHILDREN (filhos de um gasto pai)
+    ipcMain.handle('expenses:getChildren', (_, parentId: number) => {
+        return db.prepare(`
+            SELECT
+                e.*,
+                c.name as category_name,
+                c.color as category_color,
+                pm.name as payment_method_name
+            FROM expenses e
+            LEFT JOIN categories c ON c.id = e.category_id
+            LEFT JOIN payment_methods pm ON pm.id = e.payment_method_id
+            WHERE e.parent_id = ?
+            ORDER BY e.date DESC
+        `).all(parentId)
     })
 
-    ipcMain.handle('gastos:create', (_, gasto: Gasto & { user_id: number }) => {
+    // GET BY ID
+    ipcMain.handle('expenses:getById', (_, id: number) => {
+        return db.prepare('SELECT * FROM expenses WHERE id = ?').get(id)
+    })
+
+    // CREATE
+    ipcMain.handle('expenses:create', (_, expense: Expense) => {
         const stmt = db.prepare(`
-            INSERT INTO gastos (user_id, descricao, total, categoria, data, pago)
-            VALUES (@user_id, @descricao, @total, @categoria, @data, @pago)
+            INSERT INTO expenses (
+                user_id, parent_id, category_id, payment_method_id,
+                description, amount, is_paid, is_recurring,
+                recurrence_type, date, payment_date, notes
+            ) VALUES (
+                @user_id, @parent_id, @category_id, @payment_method_id,
+                @description, @amount, @is_paid, @is_recurring,
+                @recurrence_type, @date, @payment_date, @notes
+            )
         `)
-        const result = stmt.run(gasto)
-        return { id: result.lastInsertRowid, ...gasto }
+        const result = stmt.run(expense)
+        return { id: result.lastInsertRowid, ...expense }
     })
 
-    ipcMain.handle('gastos:delete', (_, id: number) => {
-        db.prepare('DELETE FROM gastos WHERE id = ?').run(id)
+    // UPDATE
+    ipcMain.handle('expenses:update', (_, expense: Expense) => {
+        const stmt = db.prepare(`
+            UPDATE expenses SET
+                category_id = @category_id,
+                payment_method_id = @payment_method_id,
+                description = @description,
+                amount = @amount,
+                is_paid = @is_paid,
+                is_recurring = @is_recurring,
+                recurrence_type = @recurrence_type,
+                date = @date,
+                payment_date = @payment_date,
+                notes = @notes
+            WHERE id = @id
+        `)
+        stmt.run(expense)
         return { success: true }
     })
 
-    // pago = 0, nao pago = 1
-    ipcMain.handle('gastos:togglePago', (_, id: number) => {
+    // TOGGLE PAID (pago = 0, nao pago = 1)
+    ipcMain.handle('expenses:togglePaid', (_, id: number) => {
         db.prepare(`
-            UPDATE gastos SET pago = CASE WHEN pago = 1 THEN 0 ELSE 1 END WHERE id = ?
+            UPDATE expenses
+            SET is_paid = CASE WHEN is_paid = 1 THEN 0 ELSE 1 END
+            WHERE id = ?
         `).run(id)
+        return { success: true }
+    })
+
+    // DELETE
+    ipcMain.handle('expenses:delete', (_, id: number) => {
+        db.prepare('DELETE FROM expenses WHERE id = ?').run(id)
+        return { success: true }
+    })
+}
+
+function setupSettingsHandlers() {
+    // === HANDLERS DE CATEGORIAS ===
+
+    // Buscar categorias
+    ipcMain.handle('categories:getAll', (_, userId: number) => {
+        return db.prepare(`
+            SELECT *
+            FROM categories
+            WHERE user_id = ?
+            ORDER BY name ASC
+        `).all(userId)
+    })
+
+    // Criar categoria
+    ipcMain.handle('categories:create', (_, category: Category) => {
+        const stmt = db.prepare(`
+            INSERT INTO categories (user_id, name, color, icon)
+            VALUES (@user_id, @name, @color, @icon)
+        `)
+        const result = stmt.run(category)
+        return { id: result.lastInsertRowid, ...category }
+    })
+
+    // Deletar categoria
+    ipcMain.handle('categories:delete', (_, id: number) => {
+        db.prepare('DELETE FROM categories WHERE id = ?').run(id)
+        return { success: true}
+    })
+
+    // === HANDLERS DE MEIOS DE PAGAMENTO ===
+
+    // Buscar meio de pagamento
+    ipcMain.handle('paymentMethods:getAll', (_, userId: number) => {
+        return db.prepare(`
+            SELECT *
+            FROM payment_methods
+            WHERE user_id = ?
+            ORDER BY name ASC
+        `).all(userId)
+    })
+
+    // Criar meio de pagamento
+    ipcMain.handle('paymentMethods:create', (_, method: PaymentMethod) => {
+        const stmt = db.prepare(`
+            INSERT INTO payment_methods (user_id, name, type)
+            VALUES (@user_id, @name, @type)
+        `)
+        const result = stmt.run(method)
+        return { id: result.lastInsertRowid, ...method }
+    })
+
+    // Deletar meio de pagamento
+    ipcMain.handle('paymentMethods:delete', (_, id: number) => {
+        db.prepare('DELETE FROM payment_methods WHERE id = ?').run(id)
         return { success: true }
     })
 }
@@ -189,4 +360,5 @@ export function initDatabase() {
     setupDatabase()
     setupAuthHandlers()
     setupExpensesHandlers()
+    setupSettingsHandlers()
 }

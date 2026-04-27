@@ -32,16 +32,56 @@ contextBridge.exposeInMainWorld('api', {
     checkEmail: (email: string) =>
       ipcRenderer.invoke('auth:checkEmail', email),
   },
-  gastos: {
-    getAll: (userId: number) => ipcRenderer.invoke('gastos:getAll', userId),
-    getById: (id: number) => ipcRenderer.invoke('gastos:getById', id),
-    create: (gasto: {
-      descricao: string
-      total: number
-      categoria: string
-      data: string
+  expenses: {
+    getAll: (userId: number) => ipcRenderer.invoke('expenses:getAll', userId),
+    getChildren: (userId: number) => ipcRenderer.invoke('expenses:getChildren', userId),
+    getById: (id: number) => ipcRenderer.invoke('expenses:getById', id),
+    create: (expense: {
       user_id: number
-    }) => ipcRenderer.invoke('gastos:create', gasto),
-    delete: (id: number) => ipcRenderer.invoke('gastos:delete', id),
+      parent_id: number
+      category_id: number
+      payment_method_id: number
+      description: string
+      amount: number
+      is_paid: number
+      is_recurring: number
+      recurrence_type: string
+      date: string
+      payment_date: string
+      notes: string
+    }) => ipcRenderer.invoke('expenses:create', expense),
+    update: (expense: {
+      category_id: number
+      payment_method_id: number
+      description: string
+      amount: number
+      is_paid: number
+      is_recurring:number
+      recurrence_type: string
+      date: string
+      payment_date: string
+      notes: string
+    }) => ipcRenderer.invoke('expenses:update', expense),
+    togglePaid: (id: number) => ipcRenderer.invoke('expenses:togglePaid', id),
+    delete: (id: number) => ipcRenderer.invoke('expenses:delete', id),
+  },
+  categories: {
+    getAll: (userId: number) => ipcRenderer.invoke('categories:getAll', userId),
+    create: (category: {
+      user_id: number
+      name: string
+      color?: string | null
+      icon?: string | null
+    }) => ipcRenderer.invoke('categories:create', category),
+    delete: (id: number) => ipcRenderer.invoke('categories:delete', id)
+  },
+  paymentMethods: {
+    getAll: (userId: number) => ipcRenderer.invoke('paymentMethods:getAll', userId),
+    create: (paymentMethod: {
+      user_id: number
+      name: string
+      type: string
+    }) => ipcRenderer.invoke('paymentMethods:create', paymentMethod),
+    delete: (id: number) => ipcRenderer.invoke('paymentMethods:delete', id)
   }
 })
