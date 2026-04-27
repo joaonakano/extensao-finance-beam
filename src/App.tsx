@@ -9,6 +9,8 @@ import { GastosPage } from '@/features/gastos/components/GastosPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Toaster } from '@/components/ui/toaster'
 import type { AuthUser } from '@/features/auth/context'
+import { DashboardLayout } from './components/DashboardLayout'
+import { PagamentosPage } from './features/meiosPagamento/components/PagamentosPage'
 
 const queryClient = new QueryClient()
 
@@ -25,12 +27,16 @@ function AppRoutes() {
       <Route path='/cadastro' element={<CadastroPage />} />
 
       {/* Páginas protegidas */}
-      <Route path='/gastos' element={
+      <Route element={
         <ProtectedRoute>
-          <GastosPage userId={user?.id ?? 1} />
+          <DashboardLayout />
         </ProtectedRoute>
-      } />
+      }>
 
+        <Route path='/gastos' element={<GastosPage userId={user?.id ?? 1} />} />
+        <Route path='/pagamentos' element={<PagamentosPage />} />
+      </Route>
+      
       {/* Fallback */}
       <Route path='*' element={<Navigate to='/' replace />} />
     </Routes>
