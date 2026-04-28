@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Plus, Trash2, CheckCircle2, Circle, Loader2 } from "lucide-react"
+import { Plus, Trash2, CheckCircle2, Circle, Loader2, Pencil } from "lucide-react"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +10,7 @@ import { toast } from "@/components/ui/toaster"
 
 import { useExpenses, useDeleteExpense, useTogglePaid } from "../hooks/useExpenses"
 import { NovoGastoForm } from "./NovoGastoForm"
+import { EditGastoForm } from "./EditGastoForm"
 
 interface Props {
   userId: number
@@ -17,9 +18,10 @@ interface Props {
 
 export function GastosPage({ userId }: Props) {
   const { expenses, isLoading } = useExpenses(userId)
-  const { mutate: deleteExpense, isPending: isDeleting } = useDeleteExpense(userId)
+  const { mutate: deleteExpense } = useDeleteExpense(userId)
   const { mutate: togglePaid } = useTogglePaid(userId)
   const [showForm, setShowForm] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<any | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const totalPago = expenses
@@ -39,9 +41,17 @@ export function GastosPage({ userId }: Props) {
   }
 
   function handleTogglePaid(id: number) {
-    togglePaid(id, {
-      onError: () => toast.error("Erro ao alterar status."),
-    })
+    togglePaid(id, { onError: () => toast.error("Erro ao alterar status.") })
+  }
+
+  function handleEdit(expense: any) {
+    setShowForm(false)
+    setEditingExpense(expense)
+  }
+
+  function handleOpenNew() {
+    setEditingExpense(null)
+    setShowForm((v) => !v)
   }
 
   if (isLoading) {
@@ -61,7 +71,7 @@ export function GastosPage({ userId }: Props) {
           <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gerencie seus gastos e despesas.</p>
         </div>
-        <Button onClick={() => setShowForm((v) => !v)}>
+        <Button onClick={handleOpenNew}>
           <Plus className="size-4" />
           Novo Gasto
         </Button>
@@ -93,7 +103,7 @@ export function GastosPage({ userId }: Props) {
         </Card>
       </div>
 
-      {/* Formulário inline */}
+      {/* Formulário novo gasto */}
       {showForm && (
         <Card>
           <CardHeader>
@@ -103,6 +113,20 @@ export function GastosPage({ userId }: Props) {
           <Separator />
           <CardContent className="pt-5">
             <NovoGastoForm userId={userId} onClose={() => setShowForm(false)} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Formulário edição */}
+      {editingExpense && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Editar Gasto</CardTitle>
+            <CardDescription>Altere os dados da despesa.</CardDescription>
+          </CardHeader>
+          <Separator />
+          <CardContent className="pt-5">
+            <EditGastoForm userId={userId} expense={editingExpense} onClose={() => setEditingExpense(null)} />
           </CardContent>
         </Card>
       )}
@@ -119,7 +143,7 @@ export function GastosPage({ userId }: Props) {
               <TableHead>Pagamento</TableHead>
               <TableHead className="text-right">Valor</TableHead>
               <TableHead className="text-center">Status</TableHead>
-              <TableHead className="w-12"></TableHead>
+              <TableHead className="w-20 text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -148,9 +172,9 @@ export function GastosPage({ userId }: Props) {
                   </TableCell>
                   <TableCell className="font-medium">
                     {expense.description}
-                    {expense.is_recurring ? (
-                      <Badge variant="outline" className="ml-2 text-xs">Recorrente</Badge>
-                    ) : null}
+                    {expense.is_recurring
+                      ? <Badge variant="outline" className="ml-2 text-xs">Recorrente</Badge>
+                      : null}
                   </TableCell>
                   <TableCell>
                     <span className="flex items-center gap-1.5 text-sm">
@@ -170,17 +194,29 @@ export function GastosPage({ userId }: Props) {
                       : <Badge variant="destructive">Pendente</Badge>}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleDelete(expense.id)}
-                      disabled={deletingId === expense.id}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      {deletingId === expense.id
-                        ? <Loader2 className="size-3.5 animate-spin" />
-                        : <Trash2 className="size-3.5" />}
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleEdit(expense)}
+                        className="text-muted-foreground hover:text-foreground"
+                        title="Editar gasto"
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDelete(expense.id)}
+                        disabled={deletingId === expense.id}
+                        className="text-muted-foreground hover:text-destructive"
+                        title="Excluir gasto"
+                      >
+                        {deletingId === expense.id
+                          ? <Loader2 className="size-3.5 animate-spin" />
+                          : <Trash2 className="size-3.5" />}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

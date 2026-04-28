@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from '@/features/auth/context'
 import { LoginPage } from '@/features/auth/components/LoginPage'
 import { CadastroPage } from '@/features/auth/components/CadastroPage'
 import { GastosPage } from '@/features/gastos/components/GastosPage'
+import { DashboardPage } from '@/features/dashboard/components/DashboardPage'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Toaster } from '@/components/ui/toaster'
 import type { AuthUser } from '@/features/auth/context'
@@ -19,25 +20,21 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Rota raiz → redireciona baseado em auth */}
-      <Route path='/' element={<Navigate to={user ? '/gastos' : '/login'} replace />} />
+      <Route path='/' element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
 
-      {/* Páginas públicas */}
       <Route path='/login' element={<LoginPage onLogin={(u: AuthUser) => setUser(u)} />} />
       <Route path='/cadastro' element={<CadastroPage />} />
 
-      {/* Páginas protegidas */}
       <Route element={
         <ProtectedRoute>
           <DashboardLayout />
         </ProtectedRoute>
       }>
-
+        <Route path='/dashboard' element={<DashboardPage userId={user?.id ?? 1} />} />
         <Route path='/gastos' element={<GastosPage userId={user?.id ?? 1} />} />
         <Route path='/pagamentos' element={<PagamentosPage />} />
       </Route>
-      
-      {/* Fallback */}
+
       <Route path='*' element={<Navigate to='/' replace />} />
     </Routes>
   )

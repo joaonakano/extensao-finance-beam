@@ -27,6 +27,14 @@ export function useCreateExpense(userId: number) {
   })
 }
 
+export function useUpdateExpense(userId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (expense: any) => window.api.expenses.update(expense),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses", userId] }),
+  })
+}
+
 export function useDeleteExpense(userId: number) {
   const qc = useQueryClient()
   return useMutation({
