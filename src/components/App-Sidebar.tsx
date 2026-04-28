@@ -26,11 +26,19 @@ export function AppSidebar() {
                                 </a>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Cadastros</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild>
                                     <Link to="/pagamentos">
                                         <Wallet className="size-4" />
-                                    <span>Pagamentos</span>           
+                                    <span>Meios de Pagamento</span>           
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
