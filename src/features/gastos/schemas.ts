@@ -20,3 +20,20 @@ export const gastoSchema = z.object({
 })
 
 export type GastoFormValues = z.infer<typeof gastoSchema>
+
+// Schema para quitação parcial/total
+export const quitacaoSchema = z.object({
+  payment_date: z
+    .string()
+    .min(1, "Data de pagamento é obrigatória.")
+    .refine((v) => !isNaN(Date.parse(v)), { message: "Data inválida." }),
+  amount_paid: z
+    .string()
+    .min(1, "Valor a pagar é obrigatório.")
+    .refine(
+      (v) => !isNaN(Number(v.replace(",", "."))) && Number(v.replace(",", ".")) > 0,
+      { message: "Informe um valor válido maior que zero." }
+    ),
+})
+
+export type QuitacaoFormValues = z.infer<typeof quitacaoSchema>

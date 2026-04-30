@@ -1,6 +1,5 @@
 import { ipcRenderer, contextBridge } from 'electron'
 
-// Mantém o ipcRenderer original para compatibilidade
 contextBridge.exposeInMainWorld('ipcRenderer', {
   on(...args: Parameters<typeof ipcRenderer.on>) {
     const [channel, listener] = args
@@ -20,7 +19,6 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   },
 })
 
-// Expõe window.api estruturada para o frontend
 contextBridge.exposeInMainWorld('api', {
   auth: {
     login: (email: string, senha: string) =>
@@ -61,5 +59,11 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('paymentMethods:create', pm),
     delete: (id: number) =>
       ipcRenderer.invoke('paymentMethods:delete', id),
+  },
+  settlements: {
+    getByExpense: (expenseId: number) =>
+      ipcRenderer.invoke('settlements:getByExpense', expenseId),
+    create: (settlement: any) =>
+      ipcRenderer.invoke('settlements:create', settlement),
   },
 })

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Plus, Trash2, CheckCircle2, Circle, Loader2, Pencil } from "lucide-react"
+import { Plus, Trash2, CheckCircle2, Circle, Loader2, Pencil, Banknote } from "lucide-react"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "@/components/ui/toaster"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 import { useExpenses, useDeleteExpense, useTogglePaid } from "../hooks/useExpenses"
 import { NovoGastoForm } from "./NovoGastoForm"
 import { EditGastoForm } from "./EditGastoForm"
+import { QuitacaoDialog } from "./QuitacaoDialog"
 
 interface Props {
   userId: number
@@ -20,8 +22,10 @@ export function GastosPage({ userId }: Props) {
   const { expenses, isLoading } = useExpenses(userId)
   const { mutate: deleteExpense } = useDeleteExpense(userId)
   const { mutate: togglePaid } = useTogglePaid(userId)
+
   const [showForm, setShowForm] = useState(false)
   const [editingExpense, setEditingExpense] = useState<any | null>(null)
+  const [quitacaoExpense, setQuitacaoExpense] = useState<any | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const totalPago = expenses
@@ -63,167 +67,207 @@ export function GastosPage({ userId }: Props) {
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <TooltipProvider>
+      <div className="p-6 max-w-6xl mx-auto space-y-6">
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Gerencie seus gastos e despesas.</p>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Gerencie seus gastos e despesas.</p>
+          </div>
+          <Button onClick={handleOpenNew}>
+            <Plus className="size-4" />
+            Novo Gasto
+          </Button>
         </div>
-        <Button onClick={handleOpenNew}>
-          <Plus className="size-4" />
-          Novo Gasto
-        </Button>
-      </div>
 
-      {/* Cards de resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="py-4">
-          <CardHeader className="pb-1">
-            <CardDescription>Total de registros</CardDescription>
-            <CardTitle className="text-2xl">{expenses.length}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="py-4">
-          <CardHeader className="pb-1">
-            <CardDescription>Total pago</CardDescription>
-            <CardTitle className="text-2xl text-green-600">
-              R$ {totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card className="py-4">
-          <CardHeader className="pb-1">
-            <CardDescription>Total pendente</CardDescription>
-            <CardTitle className="text-2xl text-destructive">
-              R$ {totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
+        {/* Cards de resumo */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card className="py-4">
+            <CardHeader className="pb-1">
+              <CardDescription>Total de registros</CardDescription>
+              <CardTitle className="text-2xl">{expenses.length}</CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="py-4">
+            <CardHeader className="pb-1">
+              <CardDescription>Total pago</CardDescription>
+              <CardTitle className="text-2xl text-green-600">
+                R$ {totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card className="py-4">
+            <CardHeader className="pb-1">
+              <CardDescription>Total pendente</CardDescription>
+              <CardTitle className="text-2xl text-destructive">
+                R$ {totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
 
-      {/* Formulário novo gasto */}
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Novo Gasto</CardTitle>
-            <CardDescription>Preencha os dados da despesa.</CardDescription>
-          </CardHeader>
-          <Separator />
-          <CardContent className="pt-5">
-            <NovoGastoForm userId={userId} onClose={() => setShowForm(false)} />
-          </CardContent>
-        </Card>
-      )}
+        {/* Formulário novo gasto */}
+        {showForm && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Novo Gasto</CardTitle>
+              <CardDescription>Preencha os dados da despesa.</CardDescription>
+            </CardHeader>
+            <Separator />
+            <CardContent className="pt-5">
+              <NovoGastoForm userId={userId} onClose={() => setShowForm(false)} />
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Formulário edição */}
-      {editingExpense && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Editar Gasto</CardTitle>
-            <CardDescription>Altere os dados da despesa.</CardDescription>
-          </CardHeader>
-          <Separator />
-          <CardContent className="pt-5">
-            <EditGastoForm userId={userId} expense={editingExpense} onClose={() => setEditingExpense(null)} />
-          </CardContent>
-        </Card>
-      )}
+        {/* Formulário edição */}
+        {editingExpense && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Editar Gasto</CardTitle>
+              <CardDescription>Altere os dados da despesa.</CardDescription>
+            </CardHeader>
+            <Separator />
+            <CardContent className="pt-5">
+              <EditGastoForm userId={userId} expense={editingExpense} onClose={() => setEditingExpense(null)} />
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Tabela */}
-      <div className="rounded-xl border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10"></TableHead>
-              <TableHead>Data</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Pagamento</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="w-20 text-center">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {expenses.length === 0 ? (
+        {/* Tabela */}
+        <div className="rounded-xl border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
-                  Nenhum gasto registrado. Clique em "Novo Gasto" para começar.
-                </TableCell>
+                <TableHead className="w-10"></TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Pagamento</TableHead>
+                <TableHead className="text-right">Valor</TableHead>
+                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="w-28 text-center">Ações</TableHead>
               </TableRow>
-            ) : (
-              expenses.map((expense: any) => (
-                <TableRow key={expense.id} className={expense.is_paid ? "opacity-60" : ""}>
-                  <TableCell>
-                    <button
-                      onClick={() => handleTogglePaid(expense.id)}
-                      title={expense.is_paid ? "Marcar como pendente" : "Marcar como pago"}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {expense.is_paid
-                        ? <CheckCircle2 className="size-4 text-green-500" />
-                        : <Circle className="size-4" />}
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                    {new Date(expense.date).toLocaleDateString("pt-BR")}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {expense.description}
-                    {expense.is_recurring
-                      ? <Badge variant="outline" className="ml-2 text-xs">Recorrente</Badge>
-                      : null}
-                  </TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-1.5 text-sm">
-                      <span style={{ color: expense.category_color }}>●</span>
-                      {expense.category_name}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {expense.payment_method_name}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold tabular-nums">
-                    R$ {Number(expense.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {expense.is_paid
-                      ? <Badge className="bg-green-500 hover:bg-green-600">Pago</Badge>
-                      : <Badge variant="destructive">Pendente</Badge>}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleEdit(expense)}
-                        className="text-muted-foreground hover:text-foreground"
-                        title="Editar gasto"
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleDelete(expense.id)}
-                        disabled={deletingId === expense.id}
-                        className="text-muted-foreground hover:text-destructive"
-                        title="Excluir gasto"
-                      >
-                        {deletingId === expense.id
-                          ? <Loader2 className="size-3.5 animate-spin" />
-                          : <Trash2 className="size-3.5" />}
-                      </Button>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {expenses.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
+                    Nenhum gasto registrado. Clique em "Novo Gasto" para começar.
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                expenses.map((expense: any) => (
+                  <TableRow key={expense.id} className={expense.is_paid ? "opacity-60" : ""}>
+                    <TableCell>
+                      <button
+                        onClick={() => handleTogglePaid(expense.id)}
+                        title={expense.is_paid ? "Marcar como pendente" : "Marcar como pago"}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {expense.is_paid
+                          ? <CheckCircle2 className="size-4 text-green-500" />
+                          : <Circle className="size-4" />}
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                      {new Date(expense.date).toLocaleDateString("pt-BR")}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {expense.description}
+                      {expense.is_recurring
+                        ? <Badge variant="outline" className="ml-2 text-xs">Recorrente</Badge>
+                        : null}
+                    </TableCell>
+                    <TableCell>
+                      <span className="flex items-center gap-1.5 text-sm">
+                        <span style={{ color: expense.category_color }}>●</span>
+                        {expense.category_name}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {expense.payment_method_name}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold tabular-nums">
+                      R$ {Number(expense.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {expense.is_paid
+                        ? <Badge className="bg-green-500 hover:bg-green-600">Pago</Badge>
+                        : <Badge variant="destructive">Pendente</Badge>}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center gap-1">
+
+                        {/* Botão Quite */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => setQuitacaoExpense(expense)}
+                              className="text-muted-foreground hover:text-amber-600"
+                              title="Registrar quite"
+                            >
+                              <Banknote className="size-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Registrar quite</TooltipContent>
+                        </Tooltip>
+
+                        {/* Botão Editar */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => handleEdit(expense)}
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <Pencil className="size-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Editar gasto</TooltipContent>
+                        </Tooltip>
+
+                        {/* Botão Excluir */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => handleDelete(expense.id)}
+                              disabled={deletingId === expense.id}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              {deletingId === expense.id
+                                ? <Loader2 className="size-3.5 animate-spin" />
+                                : <Trash2 className="size-3.5" />}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Excluir gasto</TooltipContent>
+                        </Tooltip>
+
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Dialog de Quitação */}
+        <QuitacaoDialog
+          userId={userId}
+          expense={quitacaoExpense}
+          open={quitacaoExpense !== null}
+          onOpenChange={(open) => { if (!open) setQuitacaoExpense(null) }}
+        />
+
       </div>
-    </div>
+    </TooltipProvider>
   )
 }

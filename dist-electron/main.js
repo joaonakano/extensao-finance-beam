@@ -50,6 +50,15 @@ function setupSchema() {
       FOREIGN KEY (category_id) REFERENCES categories(id),
       FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id)
     );
+
+    CREATE TABLE IF NOT EXISTS settlements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      expense_id INTEGER NOT NULL,
+      amount_paid REAL NOT NULL,
+      payment_date TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
+    );
   `);
   const demoUser = db.prepare("SELECT id FROM users WHERE email = ?").get("demo@finance.com");
   if (!demoUser) {
@@ -244,6 +253,38 @@ function initDatabase() {
   setupExpensesHandlers();
   setupCategoriesHandlers();
   setupPaymentMethodsHandlers();
+  setupSettlementsHandlers();
+}
+function setupSettlementsHandlers() {
+  ipcMain.handle("settlements:getByExpense", (_, expenseId) => {
+    return db.prepare(
+      "SELECT * FROM settlements WHERE expense_id = ? ORDER BY payment_date ASC"
+    ).all(expenseId);
+  });
+  ipcMain.handle("settlements:create", (_, settlement) => {
+    try {
+      const expense = db.prepare("SELECT total FROM expenses WHERE id = ?").get(settlement.expense_id);
+      if (!expense) return { success: false, error: "Despesa não encontrada." };
+      const paidSoFar = db.prepare(
+        "SELECT COALESCE(SUM(amount_paid), 0) AS total FROM settlements WHERE expense_id = ?"
+      ).get(settlement.expense_id).total;
+      const remaining = expense.total - paidSoFar;
+      if (settlement.amount_paid > remaining + 1e-3) {
+        return { success: false, error: `Valor superior ao saldo restante (R$ ${remaining.toFixed(2)}).` };
+      }
+      const result = db.prepare(
+        "INSERT INTO settlements (expense_id, amount_paid, payment_date) VALUES (@expense_id, @amount_paid, @payment_date)"
+      ).run(settlement);
+      const newPaid = paidSoFar + settlement.amount_paid;
+      if (newPaid >= expense.total - 1e-3) {
+        db.prepare("UPDATE expenses SET is_paid = 1 WHERE id = ?").run(settlement.expense_id);
+      }
+      return { success: true, id: result.lastInsertRowid };
+    } catch (err) {
+      console.error("settlements:create error", err);
+      return { success: false, error: "Erro ao registrar quitação." };
+    }
+  });
 }
 createRequire(import.meta.url);
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));

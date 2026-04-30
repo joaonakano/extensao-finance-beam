@@ -24,6 +24,10 @@ export interface IApi {
         getAll: (userId: number) => Promise<any[]>
         create: (paymentMethod: any) => Promise<any>
         delete: (id: number) => Promise<any>
+    },
+    settlements: {
+        getByExpense: (expenseId: number) => Promise<any[]>
+        create: (settlement: { expense_id: number; amount_paid: number; payment_date: string }) => Promise<any>
     }
 }
 

@@ -42,5 +42,9 @@ electron.contextBridge.exposeInMainWorld("api", {
     getAll: (userId) => electron.ipcRenderer.invoke("paymentMethods:getAll", userId),
     create: (pm) => electron.ipcRenderer.invoke("paymentMethods:create", pm),
     delete: (id) => electron.ipcRenderer.invoke("paymentMethods:delete", id)
+  },
+  settlements: {
+    getByExpense: (expenseId) => electron.ipcRenderer.invoke("settlements:getByExpense", expenseId),
+    create: (settlement) => electron.ipcRenderer.invoke("settlements:create", settlement)
   }
 });
