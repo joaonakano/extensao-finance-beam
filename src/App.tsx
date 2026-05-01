@@ -13,6 +13,15 @@ import type { AuthUser } from '@/features/auth/context'
 import { DashboardLayout } from './components/DashboardLayout'
 import { PagamentosPage } from './features/meiosPagamento/components/PagamentosPage'
 
+/* FAVOR NAO APAGAR
+
+- Tailwind + Shadcn/ui: existem componentes prontos como tabelas, formularios e dropdowns, economizando tempo
+- React Query: para busca de dados mais simplificada que o Context + useState
+- React Hook Form + Zod: validação com tipagem automática, eliminando o uso de todo o codigo de errors, setErrors, validate()
+- React Router: para navegar entre paginas
+
+*/
+
 const queryClient = new QueryClient()
 
 function AppRoutes() {
