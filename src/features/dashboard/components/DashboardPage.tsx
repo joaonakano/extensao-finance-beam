@@ -27,19 +27,19 @@ export function DashboardPage({ userId }: Props) {
     const monthStr = today.slice(0, 7)
 
     const total = expenses.reduce((s: number, e: any) => s + Number(e.total), 0)
-    const hoje = expenses.filter((e: any) => e.date === today).reduce((s: number, e: any) => s + Number(e.total), 0)
-    const semana = expenses.filter((e: any) => e.date >= weekAgo).reduce((s: number, e: any) => s + Number(e.total), 0)
-    const mes = expenses.filter((e: any) => e.date.startsWith(monthStr)).reduce((s: number, e: any) => s + Number(e.total), 0)
+    const hoje = expenses.filter((e: any) => e.date === today).reduce((s: number, e: any) => s + Number(e.remaining_amount ?? e.total), 0)
+    const semana = expenses.filter((e: any) => e.date >= weekAgo).reduce((s: number, e: any) => s + Number(e.remaining_amount ?? e.total), 0)
+    const mes = expenses.filter((e: any) => e.date.startsWith(monthStr)).reduce((s: number, e: any) => s + Number(e.remaining_amount ?? e.total), 0)
 
-    const pagos = expenses.filter((e: any) => e.is_paid).reduce((s: number, e: any) => s + Number(e.total), 0)
-    const pendente = expenses.filter((e: any) => !e.is_paid).reduce((s: number, e: any) => s + Number(e.total), 0)
+    const pagos = expenses.reduce((s: number, e: any) => s + Number(e.amount_paid ?? 0), 0)
+    const pendente = expenses.reduce((s: number, e: any) => s + Number(e.remaining_amount ?? 0), 0)
 
     const catMap: Record<string, { total: number; color: string }> = {}
     expenses.forEach((e: any) => {
       const name = e.category_name ?? "Sem categoria"
       const color = e.category_color ?? "#6b7280"
       if (!catMap[name]) catMap[name] = { total: 0, color }
-      catMap[name].total += Number(e.total)
+      catMap[name].total += Number(e.remaining_amount ?? e.total)
     })
     const cats = Object.entries(catMap).sort((a, b) => b[1].total - a[1].total)
     const maxCat = cats[0]?.[1].total ?? 1
@@ -47,7 +47,7 @@ export function DashboardPage({ userId }: Props) {
     const pmMap: Record<string, number> = {}
     expenses.forEach((e: any) => {
       const name = e.payment_method_name ?? "Não informado"
-      pmMap[name] = (pmMap[name] ?? 0) + Number(e.total)
+      pmMap[name] = (pmMap[name] ?? 0) + Number(e.remaining_amount ?? e.total)
     })
     const pms = Object.entries(pmMap).sort((a, b) => b[1] - a[1])
 

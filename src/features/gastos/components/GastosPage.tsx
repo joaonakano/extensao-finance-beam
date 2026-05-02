@@ -29,12 +29,10 @@ export function GastosPage({ userId }: Props) {
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const totalPago = expenses
-    .filter((e: any) => e.is_paid)
-    .reduce((acc: number, e: any) => acc + (e.total ?? 0), 0)
+    .reduce((acc: number, e: any) => acc + (e.amount_paid ?? 0), 0)
 
   const totalPendente = expenses
-    .filter((e: any) => !e.is_paid)
-    .reduce((acc: number, e: any) => acc + (e.total ?? 0), 0)
+    .reduce((acc: number, e: any) => acc + (e.remaining_amount ?? 0), 0)
 
   function handleDelete(id: number) {
     setDeletingId(id)
@@ -191,7 +189,14 @@ export function GastosPage({ userId }: Props) {
                       {expense.payment_method_name}
                     </TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">
-                      R$ {Number(expense.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span>R$ {Number(expense.remaining_amount ?? expense.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                        {expense.amount_paid > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            ({expense.amount_paid > 0 ? '+' : ''}R$ {Number(expense.amount_paid).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} pago)
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       {expense.is_paid

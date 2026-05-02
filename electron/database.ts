@@ -156,11 +156,18 @@ function setupExpensesHandlers() {
         e.*,
         c.name  AS category_name,
         c.color AS category_color,
-        p.name  AS payment_method_name
+        p.name  AS payment_method_name,
+        COALESCE(SUM(s.amount_paid), 0) AS amount_paid,
+        CASE 
+          WHEN COALESCE(SUM(s.amount_paid), 0) >= e.total THEN 0
+          ELSE e.total - COALESCE(SUM(s.amount_paid), 0)
+        END AS remaining_amount
       FROM expenses e
       LEFT JOIN categories c ON e.category_id = c.id
       LEFT JOIN payment_methods p ON e.payment_method_id = p.id
+      LEFT JOIN settlements s ON e.id = s.expense_id
       WHERE e.user_id = ?
+      GROUP BY e.id
       ORDER BY e.date DESC, e.created_at DESC
     `).all(userId)
   })
