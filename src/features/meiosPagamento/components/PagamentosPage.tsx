@@ -7,39 +7,37 @@ import { NovoPagamentoForm } from "./NovoPagamentoForm"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { columns, PaymentMethod, paymentMethodSchema } from "./columns.tsx"
+import { DataTable } from "./data-table"
+import { usePaymentMethods } from "../hooks/usePaymentMethods.tsx"
 
 export function PagamentosPage() {
   const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState<PaymentMethod | null>(null)
+  const [mode, setMode] = useState<"view" | "edit" | null>(null)
 
-  // react query para automatizar o processo de chamar o ipchandle
-  const { data: pagamentos } = useQuery({
-    queryKey: ["payment-methods"],
-    queryFn: () => window.api.paymentMethods.getAll(1)
-  })
   const queryClient = useQueryClient()
 
-  async function handleDelete(id: number) {
-    const confirmed = confirm("Deseja excluir este meio de pagamento?")
-    if (!confirmed) return
+  // hook para automatizar o processo de chamar o ipchandle
+  const {
+    data: pagamentos,
+    remove,
+  } = usePaymentMethods()
 
-    const result = await window.api.paymentMethods.delete(id)
-
-    if (!result.success) {
-      alert(result.error)
-      return
-    }
-
-    queryClient.invalidateQueries({ queryKey: ["payment-methods"] })
+  function handleView(payment: PaymentMethod) {
+    setSelected(payment)
+    setMode("view")
+    console.log("VISUALIZANDO")
   }
 
-  function formatType(type: string) {
-    switch (type) {
-      case "dinheiro": return "Dinheiro"
-      case "pix": return "PIX"
-      case "cartao_credito": return "Cartão de Crédito"
-      case "cartao_debito": return "Cartão de Débito"
-      default: return "Outro"
-    }
+  function handleEdit(payment: PaymentMethod) {
+    setSelected(payment)
+    setMode("edit")
+    console.log("EDITANDO")
+  }
+
+  function handleDelete(payment: PaymentMethod) {
+    remove(payment.id)
   }
 
   return (
@@ -80,49 +78,16 @@ export function PagamentosPage() {
         </div>
         
         {/* Tabela */}
-        <div className="rounded-xl border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-center w-24">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-   
-            <TableBody>
-              {!pagamentos || pagamentos.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
-                    Nenhum meio de pagamento cadastrado. Clique em "Novo" para começar.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                pagamentos.map((p: any) => (
-                  <TableRow key={p.id} className="hover:bg-muted/40">
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {formatType(p.type)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {p.status === "ativo"
-                        ? <Badge className="bg-green-500 hover:bg-green-600">Ativo</Badge>
-                        : <Badge variant="destructive">Inativo</Badge>}
-                    </TableCell>
-                    <TableCell className="text-center">
-                        <Button variant="ghost" size="icon-sm" onClick={() => handleDelete(p.id)} className="text-muted-foreground hover:text-destructive">
-                          <Trash2 className="size-4"></Trash2>
-                        </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-        </Table>
+        <div className="container mx-auto py-10">
+          <DataTable
+            columns={columns}
+            data={pagamentos ?? []}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            />
         </div>
+        
       </div>
     </TooltipProvider>
   )

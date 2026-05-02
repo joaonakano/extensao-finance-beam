@@ -13,7 +13,6 @@ export function NovoPagamentoForm({
     const [name, setName] = useState("")
     const [type, setType] = useState("outro")
     const [loading, setLoading] = useState(false)
-
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
 
