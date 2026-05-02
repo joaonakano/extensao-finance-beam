@@ -119,9 +119,9 @@ export const columns: ColumnDef<PaymentMethod>[] = [
                         </DropdownMenuItem>
 
                         <AlertDialog>
-                            <AlertDialogTrigger>
+                            <AlertDialogTrigger asChild>
                                 <DropdownMenuItem
-                                    className="text-destructive focus:text-destructive"
+                                    className="w-full text-destructive focus:text-destructive"
                                     onSelect={(e) => e.preventDefault()}
                                 >
                                     Excluir
