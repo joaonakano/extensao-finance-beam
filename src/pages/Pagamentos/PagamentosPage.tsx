@@ -1,43 +1,55 @@
 import { useState } from "react"
-import { Plus, Trash2 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { NovoPagamentoForm } from "./NovoPagamentoForm"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { columns, PaymentMethod, paymentMethodSchema } from "./columns.tsx"
+import { columns, PaymentMethod } from "./columns.tsx"
 import { DataTable } from "./data-table"
-import { usePaymentMethods } from "../hooks/usePaymentMethods.tsx"
+import { usePaymentMethods } from "./hooks/usePaymentMethods.tsx"
+import { NovoPagamentoForm } from "./components/NovoPagamentoForm.tsx"
+import { PagamentoEditDialog } from "./components/PagamentosEditDialog.tsx"
+import { PagamentoViewDialog } from "./components/PagamentosViewDialog.tsx"
 
 export function PagamentosPage() {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<PaymentMethod | null>(null)
   const [mode, setMode] = useState<"view" | "edit" | null>(null)
 
-  const queryClient = useQueryClient()
+  const userId = 1
 
   // hook para automatizar o processo de chamar o ipchandle
   const {
     data: pagamentos,
     remove,
-  } = usePaymentMethods()
+    create
+  } = usePaymentMethods(userId)
+
+  async function handleCreate(data: { name: string, type: PaymentMethod["type"] }) {
+    await create.mutateAsync({
+      user_id: userId,
+      ...data,
+    })
+
+    setOpen(false)
+  }
 
   function handleView(payment: PaymentMethod) {
     setSelected(payment)
     setMode("view")
-    console.log("VISUALIZANDO")
   }
 
   function handleEdit(payment: PaymentMethod) {
     setSelected(payment)
     setMode("edit")
-    console.log("EDITANDO")
   }
 
   function handleDelete(payment: PaymentMethod) {
-    remove(payment.id)
+    remove.mutate(payment.id)
+  }
+
+  function handleCloseDialogs() {
+    setSelected(null)
+    setMode(null)
   }
 
   return (
@@ -53,6 +65,7 @@ export function PagamentosPage() {
             </p>
           </div>
 
+          {/* CREATE */}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -67,11 +80,8 @@ export function PagamentosPage() {
               </DialogHeader>
 
               <NovoPagamentoForm
-                userId={1} 
-                onSuccess={() =>  {
-                  setOpen(false)
-                  queryClient.invalidateQueries({ queryKey: ["payment-methods"] })
-                }}
+                userId={userId} 
+                onSubmit={handleCreate}
               />
             </DialogContent>
           </Dialog>
@@ -88,6 +98,20 @@ export function PagamentosPage() {
             />
         </div>
         
+        {/* VIEW */}
+        <PagamentoViewDialog
+          open={mode === "view"}
+          paymentMethod={selected}
+          onClose={handleCloseDialogs}
+        />
+
+        {/* EDIT */}
+        <PagamentoEditDialog
+          open={mode === "edit"}
+          paymentMethod={selected}
+          onClose={handleCloseDialogs}
+        />
+
       </div>
     </TooltipProvider>
   )

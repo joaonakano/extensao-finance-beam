@@ -269,6 +269,20 @@ function setupPaymentMethodsHandlers() {
       return { success: false, error: "Erro ao criar meio de pagamento." };
     }
   });
+  ipcMain.handle("paymentMethods:update", (_, pm) => {
+    try {
+      db.prepare(`
+        UPDATE payment_methods
+        SET name = @name,
+          type = @type,
+        WHERE id = @id
+      `).run(pm);
+      return { success: true };
+    } catch (err) {
+      console.error("paymentMethods:update error", err);
+      return { success: false, error: "Erro ao atualizar meio de pagamento." };
+    }
+  });
   ipcMain.handle("paymentMethods:delete", (_, id) => {
     try {
       db.prepare("DELETE FROM payment_methods WHERE id = ?").run(id);

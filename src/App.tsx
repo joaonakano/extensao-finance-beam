@@ -2,16 +2,16 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 
-import { AuthProvider, useAuth } from '@/features/auth/context'
-import { LoginPage } from '@/features/auth/components/LoginPage'
-import { CadastroPage } from '@/features/auth/components/CadastroPage'
-import { GastosPage } from '@/features/gastos/components/GastosPage'
-import { DashboardPage } from '@/features/dashboard/components/DashboardPage'
+
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Toaster } from '@/components/ui/toaster'
-import type { AuthUser } from '@/features/auth/context'
+import { LoginPage } from './pages/auth/components/LoginPage'
+import { AuthProvider, AuthUser, useAuth } from './pages/auth/context'
+import { CadastroPage } from './pages/auth/components/CadastroPage'
 import { DashboardLayout } from './components/DashboardLayout'
-import { PagamentosPage } from './features/meiosPagamento/components/PagamentosPage'
+import { DashboardPage } from './pages/dashboard/components/DashboardPage'
+import { GastosPage } from './pages/gastos/components/GastosPage'
+import { PagamentosPage } from './pages/Pagamentos/PagamentosPage'
 
 /* FAVOR NAO APAGAR
 

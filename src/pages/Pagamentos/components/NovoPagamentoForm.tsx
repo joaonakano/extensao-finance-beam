@@ -2,17 +2,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
+import { PaymentMethod } from "../columns";
+
+type FormData = {
+    name: string
+    type: PaymentMethod["type"]
+}
+
+type Props = {
+    userId: number
+    onSubmit: (data: FormData) => Promise<void> | void
+    loading?: boolean
+    onSuccess?: () => void
+}
 
 export function NovoPagamentoForm({
     userId,
-    onSuccess
-}: {
-    userId: number,
-    onSuccess?: () => void
-}) {
+    onSubmit,
+    loading = false,
+    onSuccess,
+}: Props) {
     const [name, setName] = useState("")
-    const [type, setType] = useState("outro")
-    const [loading, setLoading] = useState(false)
+    const [type, setType] = useState<PaymentMethod["type"]>("outro")
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
 
@@ -21,20 +33,10 @@ export function NovoPagamentoForm({
             return
         }
 
-        setLoading(true)
-
-        const result = await window.api.paymentMethods.create({
-            user_id: userId,
+        await onSubmit({
             name,
             type
         })
-
-        setLoading(false)
-
-        if(!result.success) {
-            alert(result.error)
-            return
-        }
 
         setName("")
         setType("outro")
@@ -50,10 +52,11 @@ export function NovoPagamentoForm({
                 onChange={(e) => setName(e.target.value)}
             />
             
-            <Select value={type} onValueChange={(v) => setType(v)}>
+            <Select value={type} onValueChange={(v) => setType(v as PaymentMethod["type"])}>
                 <SelectTrigger>
                     <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
+
                 <SelectContent>
                     <SelectItem value="dinheiro">Dinheiro</SelectItem>
                     <SelectItem value="pix">PIX</SelectItem>

@@ -19,6 +19,7 @@ declare module "@tanstack/react-table" {
 // you can use zod schema here if you want
 export const paymentMethodSchema = z.object({
     id: z.number(),
+    user_id: z.number(),
     name: z.string().min(1, "Nome obrigatório"),
     type: z.enum(["pix", "cartao_credito", "cartao_debito", "dinheiro", "outro"]).default("outro"),
     status: z.enum(["ativo", "inativo"]).default("ativo"),

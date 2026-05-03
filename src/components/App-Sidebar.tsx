@@ -9,9 +9,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/pages/auth/context"
 import { LayoutDashboard, Receipt, Wallet, LogOut } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
-import { useAuth } from "@/features/auth/context"
+
 
 export function AppSidebar() {
   const { user, setUser } = useAuth()

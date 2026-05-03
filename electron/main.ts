@@ -1,10 +1,9 @@
 import { app, BrowserWindow } from 'electron'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { initDatabase } from './database'
+import { setupSchema } from '@/main/database/schema'
+import { registerIpcHandlers } from '@/main/ipc'
 
-const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -69,6 +68,6 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
-  initDatabase()
-  createWindow()
+  setupSchema()
+  registerIpcHandlers()
 })

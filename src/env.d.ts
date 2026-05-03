@@ -23,6 +23,7 @@ export interface IApi {
     paymentMethods: {
         getAll: (userId: number) => Promise<any[]>
         create: (paymentMethod: any) => Promise<any>
+        update: (paymentMethod: any) => Promise<any>
         delete: (id: number) => Promise<any>
     },
     settlements: {
