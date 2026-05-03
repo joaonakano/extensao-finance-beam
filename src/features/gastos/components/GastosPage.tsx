@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Plus, Trash2, CheckCircle2, Circle, Loader2, Pencil, Banknote } from "lucide-react"
+import { Plus, Trash2, CheckCircle2, Circle, Loader2, Pencil, Banknote, ChevronDown, ChevronRight } from "lucide-react"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +13,8 @@ import { useExpenses, useDeleteExpense, useTogglePaid } from "../hooks/useExpens
 import { NovoGastoForm } from "./NovoGastoForm"
 import { EditGastoForm } from "./EditGastoForm"
 import { QuitacaoDialog } from "./QuitacaoDialog"
+import { NovoGastoFilhoDialog } from "./NovoGastoFilhoDialog"
+import { SubGastosRows } from "./SubGastosRows"
 
 interface Props {
   userId: number
@@ -28,11 +30,12 @@ export function GastosPage({ userId }: Props) {
   const [quitacaoExpense, setQuitacaoExpense] = useState<any | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
-  const totalPago = expenses
-    .reduce((acc: number, e: any) => acc + (e.amount_paid ?? 0), 0)
+  // US018: expand/collapse e adicionar filho
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
+  const [addingChildFor, setAddingChildFor] = useState<any | null>(null)
 
-  const totalPendente = expenses
-    .reduce((acc: number, e: any) => acc + (e.remaining_amount ?? 0), 0)
+  const totalPago = expenses.reduce((acc: number, e: any) => acc + (e.amount_paid ?? 0), 0)
+  const totalPendente = expenses.reduce((acc: number, e: any) => acc + (e.remaining_amount ?? 0), 0)
 
   function handleDelete(id: number) {
     setDeletingId(id)
@@ -54,6 +57,15 @@ export function GastosPage({ userId }: Props) {
   function handleOpenNew() {
     setEditingExpense(null)
     setShowForm((v) => !v)
+  }
+
+  function toggleExpand(id: number) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   if (isLoading) {
@@ -139,6 +151,7 @@ export function GastosPage({ userId }: Props) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8"></TableHead>
                 <TableHead className="w-10"></TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Descrição</TableHead>
@@ -146,119 +159,203 @@ export function GastosPage({ userId }: Props) {
                 <TableHead>Pagamento</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
                 <TableHead className="text-center">Status</TableHead>
-                <TableHead className="w-28 text-center">Ações</TableHead>
+                <TableHead className="w-36 text-center">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {expenses.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
                     Nenhum gasto registrado. Clique em "Novo Gasto" para começar.
                   </TableCell>
                 </TableRow>
               ) : (
-                expenses.map((expense: any) => (
-                  <TableRow key={expense.id} className={expense.is_paid ? "opacity-60" : ""}>
-                    <TableCell>
-                      <button
-                        onClick={() => handleTogglePaid(expense.id)}
-                        title={expense.is_paid ? "Marcar como pendente" : "Marcar como pago"}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
+                expenses.map((expense: any) => {
+                  const isExpanded = expandedIds.has(expense.id)
+                  const hasChildren = (expense.children_count ?? 0) > 0
+
+                  return (
+                    <>
+                      {/* Linha principal */}
+                      <TableRow
+                        key={expense.id}
+                        className={expense.is_paid ? "opacity-60" : ""}
                       >
-                        {expense.is_paid
-                          ? <CheckCircle2 className="size-4 text-green-500" />
-                          : <Circle className="size-4" />}
-                      </button>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                      {new Date(expense.date).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {expense.description}
-                      {expense.is_recurring
-                        ? <Badge variant="outline" className="ml-2 text-xs">Recorrente</Badge>
-                        : null}
-                    </TableCell>
-                    <TableCell>
-                      <span className="flex items-center gap-1.5 text-sm">
-                        <span style={{ color: expense.category_color }}>●</span>
-                        {expense.category_name}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {expense.payment_method_name}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold tabular-nums">
-                      <div className="flex flex-col items-end gap-0.5">
-                        <span>R$ {Number(expense.remaining_amount ?? expense.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                        {expense.amount_paid > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            ({expense.amount_paid > 0 ? '+' : ''}R$ {Number(expense.amount_paid).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} pago)
+                        {/* Botão expand/collapse — US018 */}
+                        <TableCell className="pr-0">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                onClick={() => toggleExpand(expense.id)}
+                                className={`
+                                  flex items-center justify-center size-6 rounded transition-colors
+                                  ${hasChildren
+                                    ? "text-primary hover:bg-primary/10"
+                                    : "text-muted-foreground/30 hover:text-muted-foreground hover:bg-muted cursor-default"
+                                  }
+                                `}
+                                title={isExpanded ? "Recolher sub-gastos" : "Expandir sub-gastos"}
+                              >
+                                {isExpanded
+                                  ? <ChevronDown className="size-3.5" />
+                                  : <ChevronRight className="size-3.5" />}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {hasChildren
+                                ? isExpanded ? "Recolher sub-gastos" : `Ver ${expense.children_count} sub-gasto(s)`
+                                : "Sem sub-gastos"}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableCell>
+
+                        {/* Toggle pago */}
+                        <TableCell>
+                          <button
+                            onClick={() => handleTogglePaid(expense.id)}
+                            title={expense.is_paid ? "Marcar como pendente" : "Marcar como pago"}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {expense.is_paid
+                              ? <CheckCircle2 className="size-4 text-green-500" />
+                              : <Circle className="size-4" />}
+                          </button>
+                        </TableCell>
+
+                        <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                          {new Date(expense.date).toLocaleDateString("pt-BR")}
+                        </TableCell>
+
+                        <TableCell className="font-medium">
+                          {expense.description}
+                          {expense.is_recurring
+                            ? <Badge variant="outline" className="ml-2 text-xs">Recorrente</Badge>
+                            : null}
+                          {hasChildren && (
+                            <Badge variant="secondary" className="ml-2 text-xs">
+                              {expense.children_count} sub
+                            </Badge>
+                          )}
+                        </TableCell>
+
+                        <TableCell>
+                          <span className="flex items-center gap-1.5 text-sm">
+                            <span style={{ color: expense.category_color }}>●</span>
+                            {expense.category_name}
                           </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {expense.is_paid
-                        ? <Badge className="bg-green-500 hover:bg-green-600">Pago</Badge>
-                        : <Badge variant="destructive">Pendente</Badge>}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-1">
+                        </TableCell>
 
-                        {/* Botão Quite */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => setQuitacaoExpense(expense)}
-                              className="text-muted-foreground hover:text-amber-600"
-                              title="Registrar quite"
-                            >
-                              <Banknote className="size-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Registrar quite</TooltipContent>
-                        </Tooltip>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {expense.payment_method_name}
+                        </TableCell>
 
-                        {/* Botão Editar */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => handleEdit(expense)}
-                              className="text-muted-foreground hover:text-foreground"
-                            >
-                              <Pencil className="size-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Editar gasto</TooltipContent>
-                        </Tooltip>
+                        <TableCell className="text-right font-semibold tabular-nums">
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span>R$ {Number(expense.remaining_amount ?? expense.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                            {expense.amount_paid > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                (+R$ {Number(expense.amount_paid).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} pago)
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
 
-                        {/* Botão Excluir */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => handleDelete(expense.id)}
-                              disabled={deletingId === expense.id}
-                              className="text-muted-foreground hover:text-destructive"
-                            >
-                              {deletingId === expense.id
-                                ? <Loader2 className="size-3.5 animate-spin" />
-                                : <Trash2 className="size-3.5" />}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Excluir gasto</TooltipContent>
-                        </Tooltip>
+                        <TableCell className="text-center">
+                          {expense.is_paid
+                            ? <Badge className="bg-green-500 hover:bg-green-600">Pago</Badge>
+                            : <Badge variant="destructive">Pendente</Badge>}
+                        </TableCell>
 
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-1">
+
+                            {/* Botão Adicionar Sub-gasto — US018 */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => {
+                                    setAddingChildFor(expense)
+                                    setExpandedIds((prev) => new Set([...prev, expense.id]))
+                                  }}
+                                  className="text-muted-foreground hover:text-primary"
+                                >
+                                  <Plus className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Adicionar sub-gasto</TooltipContent>
+                            </Tooltip>
+
+                            {/* Botão Quite */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => setQuitacaoExpense(expense)}
+                                  className="text-muted-foreground hover:text-amber-600"
+                                  title="Registrar quite"
+                                >
+                                  <Banknote className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Registrar quite</TooltipContent>
+                            </Tooltip>
+
+                            {/* Botão Editar */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => handleEdit(expense)}
+                                  className="text-muted-foreground hover:text-foreground"
+                                >
+                                  <Pencil className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Editar gasto</TooltipContent>
+                            </Tooltip>
+
+                            {/* Botão Excluir */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => handleDelete(expense.id)}
+                                  disabled={deletingId === expense.id}
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  {deletingId === expense.id
+                                    ? <Loader2 className="size-3.5 animate-spin" />
+                                    : <Trash2 className="size-3.5" />}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Excluir gasto</TooltipContent>
+                            </Tooltip>
+
+                          </div>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Linhas filhas — US018 */}
+                      {isExpanded && (
+                        <SubGastosRows
+                          key={`children-${expense.id}`}
+                          parentId={expense.id}
+                          userId={userId}
+                          deletingId={deletingId}
+                          onDelete={handleDelete}
+                          onEdit={handleEdit}
+                          onQuitacao={setQuitacaoExpense}
+                          onTogglePaid={handleTogglePaid}
+                        />
+                      )}
+                    </>
+                  )
+                })
               )}
             </TableBody>
           </Table>
@@ -271,6 +368,16 @@ export function GastosPage({ userId }: Props) {
           open={quitacaoExpense !== null}
           onOpenChange={(open) => { if (!open) setQuitacaoExpense(null) }}
         />
+
+        {/* Dialog de Novo Sub-gasto — US018 */}
+        {addingChildFor && (
+          <NovoGastoFilhoDialog
+            userId={userId}
+            parentExpense={addingChildFor}
+            open={addingChildFor !== null}
+            onOpenChange={(open) => { if (!open) setAddingChildFor(null) }}
+          />
+        )}
 
       </div>
     </TooltipProvider>

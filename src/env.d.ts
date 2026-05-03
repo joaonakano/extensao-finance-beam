@@ -8,8 +8,8 @@ export interface IApi {
     },
     expenses: {
         getAll: (userId: number) => Promise<any[]>
-        getChildren: (userId: number) => Promise<any[]>
-        getById: (id: number) => Promise<any[]>
+        getChildrenByParent: (parentId: number) => Promise<any[]>
+        getById: (id: number) => Promise<any>
         create: (expense: any) => Promise<any>
         update: (expense: any) => Promise<any>
         togglePaid: (id: number) => Promise<any>

@@ -9,10 +9,19 @@ export function useExpenses(userId: number) {
   return { expenses: data ?? [], isLoading, error }
 }
 
+export function useChildExpenses(parentId: number | null) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["expenses", "children", parentId],
+    queryFn: () => window.api.expenses.getChildrenByParent(parentId!),
+    enabled: parentId !== null,
+  })
+  return { children: data ?? [], isLoading }
+}
+
 export function useCreateExpense(userId: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (values: GastoFormValues) =>
+    mutationFn: (values: GastoFormValues & { parent_id?: number | null }) =>
       window.api.expenses.create({
         user_id: userId,
         description: values.description,
@@ -22,8 +31,14 @@ export function useCreateExpense(userId: number) {
         date: values.date,
         is_paid: values.is_paid ? 1 : 0,
         is_recurring: values.is_recurring ? 1 : 0,
+        parent_id: values.parent_id ?? null,
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses", userId] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["expenses", userId] })
+      if (variables.parent_id) {
+        qc.invalidateQueries({ queryKey: ["expenses", "children", variables.parent_id] })
+      }
+    },
   })
 }
 

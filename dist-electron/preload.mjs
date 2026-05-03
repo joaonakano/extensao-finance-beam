@@ -26,7 +26,7 @@ electron.contextBridge.exposeInMainWorld("api", {
   },
   expenses: {
     getAll: (userId) => electron.ipcRenderer.invoke("expenses:getAll", userId),
-    getChildren: (userId) => electron.ipcRenderer.invoke("expenses:getChildren", userId),
+    getChildrenByParent: (parentId) => electron.ipcRenderer.invoke("expenses:getChildrenByParent", parentId),
     getById: (id) => electron.ipcRenderer.invoke("expenses:getById", id),
     create: (expense) => electron.ipcRenderer.invoke("expenses:create", expense),
     update: (expense) => electron.ipcRenderer.invoke("expenses:update", expense),

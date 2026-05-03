@@ -50,10 +50,12 @@ function setupSchema() {
       date TEXT NOT NULL,
       is_paid INTEGER NOT NULL DEFAULT 0,
       is_recurring INTEGER NOT NULL DEFAULT 0,
+      parent_id INTEGER DEFAULT NULL,
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (category_id) REFERENCES categories(id),
-      FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id)
+      FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id),
+      FOREIGN KEY (parent_id) REFERENCES expenses(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS settlements (
@@ -65,6 +67,12 @@ function setupSchema() {
       FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
     );
   `)
+
+  // Migration: adiciona parent_id se não existir (bancos já criados)
+  const cols = db.prepare("PRAGMA table_info(expenses)").all() as any[]
+  if (!cols.find((c) => c.name === 'parent_id')) {
+    db.exec("ALTER TABLE expenses ADD COLUMN parent_id INTEGER DEFAULT NULL REFERENCES expenses(id) ON DELETE CASCADE")
+  }
 
   // Seed: usuário demo
   const demoUser = db.prepare('SELECT id FROM users WHERE email = ?').get('demo@finance.com')
@@ -161,15 +169,38 @@ function setupExpensesHandlers() {
         CASE 
           WHEN COALESCE(SUM(s.amount_paid), 0) >= e.total THEN 0
           ELSE e.total - COALESCE(SUM(s.amount_paid), 0)
+        END AS remaining_amount,
+        (SELECT COUNT(*) FROM expenses ch WHERE ch.parent_id = e.id) AS children_count
+      FROM expenses e
+      LEFT JOIN categories c ON e.category_id = c.id
+      LEFT JOIN payment_methods p ON e.payment_method_id = p.id
+      LEFT JOIN settlements s ON e.id = s.expense_id
+      WHERE e.user_id = ? AND e.parent_id IS NULL
+      GROUP BY e.id
+      ORDER BY e.date DESC, e.created_at DESC
+    `).all(userId)
+  })
+
+  ipcMain.handle('expenses:getChildrenByParent', (_, parentId: number) => {
+    return db.prepare(`
+      SELECT
+        e.*,
+        c.name  AS category_name,
+        c.color AS category_color,
+        p.name  AS payment_method_name,
+        COALESCE(SUM(s.amount_paid), 0) AS amount_paid,
+        CASE 
+          WHEN COALESCE(SUM(s.amount_paid), 0) >= e.total THEN 0
+          ELSE e.total - COALESCE(SUM(s.amount_paid), 0)
         END AS remaining_amount
       FROM expenses e
       LEFT JOIN categories c ON e.category_id = c.id
       LEFT JOIN payment_methods p ON e.payment_method_id = p.id
       LEFT JOIN settlements s ON e.id = s.expense_id
-      WHERE e.user_id = ?
+      WHERE e.parent_id = ?
       GROUP BY e.id
-      ORDER BY e.date DESC, e.created_at DESC
-    `).all(userId)
+      ORDER BY e.date ASC, e.created_at ASC
+    `).all(parentId)
   })
 
   ipcMain.handle('expenses:getById', (_, id: number) => {
@@ -179,9 +210,9 @@ function setupExpensesHandlers() {
   ipcMain.handle('expenses:create', (_, expense: any) => {
     try {
       const result = db.prepare(`
-        INSERT INTO expenses (user_id, description, total, category_id, payment_method_id, date, is_paid, is_recurring)
-        VALUES (@user_id, @description, @total, @category_id, @payment_method_id, @date, @is_paid, @is_recurring)
-      `).run(expense)
+        INSERT INTO expenses (user_id, description, total, category_id, payment_method_id, date, is_paid, is_recurring, parent_id)
+        VALUES (@user_id, @description, @total, @category_id, @payment_method_id, @date, @is_paid, @is_recurring, @parent_id)
+      `).run({ parent_id: null, ...expense })
       return { success: true, id: result.lastInsertRowid }
     } catch (err) {
       console.error('expenses:create error', err)
@@ -225,9 +256,6 @@ function setupExpensesHandlers() {
     }
   })
 
-  ipcMain.handle('expenses:getChildren', (_, userId: number) => {
-    return db.prepare('SELECT * FROM expenses WHERE user_id = ? AND is_recurring = 1').all(userId)
-  })
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────

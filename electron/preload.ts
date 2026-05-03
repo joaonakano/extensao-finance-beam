@@ -31,8 +31,8 @@ contextBridge.exposeInMainWorld('api', {
   expenses: {
     getAll: (userId: number) =>
       ipcRenderer.invoke('expenses:getAll', userId),
-    getChildren: (userId: number) =>
-      ipcRenderer.invoke('expenses:getChildren', userId),
+    getChildrenByParent: (parentId: number) =>
+      ipcRenderer.invoke('expenses:getChildrenByParent', parentId),
     getById: (id: number) =>
       ipcRenderer.invoke('expenses:getById', id),
     create: (expense: any) =>
