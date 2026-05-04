@@ -33,7 +33,7 @@ export function GastoActionsMenu({
   return (
     <DropdownMenu>
       {/* Mesmo padrão do columns.tsx: trigger sem asChild, botão dentro */}
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger>
         <Button variant="ghost" className="h-8 w-8 p-0" disabled={isDeleting}>
           <span className="sr-only">Abrir Menu</span>
           {isDeleting

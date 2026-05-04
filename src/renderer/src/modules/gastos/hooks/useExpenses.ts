@@ -20,10 +20,14 @@ export function useExpenses(userId: number) {
 export function useChildExpenses(parentId: number | null) {
   const { data, isLoading } = useQuery({
     queryKey: ["expenses", "children", parentId],
-    queryFn: () => window.api.expenses.getChildrenByParent(parentId!),
+    queryFn: async () => {
+      const res = await window.api.expenses.getChildrenByParent(parentId!)
+      if (res && typeof res === "object" && "data" in res) return (res as any).data ?? []
+      return res ?? []
+    },
     enabled: parentId !== null,
   })
-  return { children: data ?? [], isLoading }
+  return { children: (data as any[]) ?? [], isLoading }
 }
 
 export function useCreateExpense(userId: number) {
