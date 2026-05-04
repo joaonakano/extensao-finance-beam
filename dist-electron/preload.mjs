@@ -40,7 +40,8 @@ electron.contextBridge.exposeInMainWorld("api", {
   },
   paymentMethods: {
     getAll: (userId) => electron.ipcRenderer.invoke("paymentMethods:getAll", userId),
-    create: (pm) => electron.ipcRenderer.invoke("paymentMethods:create", pm),
+    create: (data) => electron.ipcRenderer.invoke("paymentMethods:create", data),
+    update: (data) => electron.ipcRenderer.invoke("paymentMethods:update", data),
     delete: (id) => electron.ipcRenderer.invoke("paymentMethods:delete", id)
   },
   settlements: {

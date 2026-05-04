@@ -5,13 +5,13 @@ import './App.css'
 
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Toaster } from '@/components/ui/toaster'
-import { LoginPage } from './pages/auth/components/LoginPage'
-import { AuthProvider, AuthUser, useAuth } from './pages/auth/context'
-import { CadastroPage } from './pages/auth/components/CadastroPage'
+import { AuthProvider, AuthUser, useAuth } from './modules/auth/context'
+import { LoginPage } from './modules/auth/components/LoginPage'
+import { CadastroPage } from './modules/auth/components/CadastroPage'
 import { DashboardLayout } from './components/DashboardLayout'
-import { DashboardPage } from './pages/dashboard/components/DashboardPage'
-import { GastosPage } from './pages/gastos/components/GastosPage'
-import { PagamentosPage } from './pages/Pagamentos/PagamentosPage'
+import { DashboardPage } from './modules/dashboard/components/DashboardPage'
+import { GastosPage } from './modules/gastos/components/GastosPage'
+import { PagamentosPage } from './modules/payment-methods/pages/PagamentosPage'
 
 /* FAVOR NAO APAGAR
 
@@ -22,7 +22,14 @@ import { PagamentosPage } from './pages/Pagamentos/PagamentosPage'
 
 */
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60, // 1 minuto
+      retry: false,
+    },
+  },
+})
 
 function AppRoutes() {
   const { user, setUser } = useAuth()

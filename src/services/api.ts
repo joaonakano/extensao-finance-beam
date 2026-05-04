@@ -1,10 +1,16 @@
+// src/services/api.ts
+import { ApiResponse } from "@/main/ipc/types"
 
-export async function handleApi<T>(promise: Promise<any>): Promise<T> {
-    const res = await promise
+export async function handleApi<T>(promise: Promise<ApiResponse<T> | T>): Promise<T> {
+    const response = await promise
 
-    if (!res.success) {
-        throw new Error(res.error || "Erro desconhecido")
+    // Se vier com wrapper { success, data }
+    if (response !== null && typeof response === 'object' && 'success' in response) {
+        const apiResponse = response as ApiResponse<T>
+        if (!apiResponse.success) throw new Error(apiResponse.error)
+        return apiResponse.data
     }
 
-    return res.data
+    // Se vier o dado direto (array ou objeto)
+    return response as T
 }

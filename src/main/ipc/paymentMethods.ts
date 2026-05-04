@@ -4,7 +4,7 @@ import { ApiResponse } from "./types";
 
 export function registerPaymentMethodsHandlers() {
     
-    ipcMain.handle('paymentMethods:getAll', (_, userId: number): ApiResponse<any[]> => {
+    ipcMain.handle('paymentMethods:getAll', async (_, userId: number): Promise<ApiResponse<any[]>> => {
         try {
             const data = db.prepare(`
                 SELECT *
@@ -14,15 +14,18 @@ export function registerPaymentMethodsHandlers() {
                 ORDER BY name ASC
             `).all(userId)
 
+            console.log("[IPC] getAll data:", data)
             return { success: true, data }
         } catch (err) {
-            console.error(err)
+            console.error("[IPC] getAll erro:", err)
             return { success: false, error: 'Erro ao buscar meios de pagamento.' }
         }
     })
 
-    ipcMain.handle('paymentMethods:create', (_, pm: any): ApiResponse<{ id: number }> => {
+    ipcMain.handle('paymentMethods:create', (_, pm: any) => {
         try {
+            console.log("pm recebido:", pm)
+
             const result = db.prepare(`
                 INSERT INTO payment_methods (user_id, name, type)
                 VALUES (@user_id, @name, @type)
@@ -33,8 +36,8 @@ export function registerPaymentMethodsHandlers() {
                 data: { id: Number(result.lastInsertRowid) }
             }
         } catch (err) {
-            console.error(err)
-            return { success: false, error: 'Erro ao criar meio de pagamento.' }
+            console.error("CREATE FATAL ERROR:", err)
+            return { success: false, error: 'Erro ao criar meio de pagamento (2 teste se isso nao aparecer quer dizer que e uma mensagem antiga).' }
         }
     })
 

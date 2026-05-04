@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Separator } from "@/components/ui/separator"
-import { useExpenses } from "@/pages/gastos/hooks/useExpenses"
-
+import { useExpenses } from "@/modules/gastos/hooks/useExpenses"
 
 interface Props {
   userId: number

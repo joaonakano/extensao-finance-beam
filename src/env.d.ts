@@ -1,5 +1,7 @@
 // src/env.d.ts
 
+import { ApiResponse } from "./main/ipc/types"
+
 export interface IApi {
     auth: {
         login: (email: string, senha: string) => Promise<any>
@@ -21,10 +23,10 @@ export interface IApi {
         delete: (id: number) => Promise<any>
     },
     paymentMethods: {
-        getAll: (userId: number) => Promise<any[]>
-        create: (paymentMethod: any) => Promise<any>
-        update: (paymentMethod: any) => Promise<any>
-        delete: (id: number) => Promise<any>
+        getAll: (userId: number) => Promise<ApiResponse<any[]>>
+        create: (paymentMethod: any) => Promise<ApiResponse<{ id: number }>>
+        update: (paymentMethod: any) => Promise<ApiResponse<null>>
+        delete: (id: number) => Promise<ApiResponse<null>>
     },
     settlements: {
         getByExpense: (expenseId: number) => Promise<any[]>
