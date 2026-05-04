@@ -22,7 +22,8 @@ export function useCreateSettlement(userId: number) {
     mutationFn: (settlement: { expense_id: number; amount_paid: number; payment_date: string }) =>
       window.api.settlements.create(settlement),
     onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ["expenses", userId] })
+      // Invalida todas as queries de expenses (pai e filhos) e settlements
+      qc.invalidateQueries({ queryKey: ["expenses"] })
       qc.invalidateQueries({ queryKey: ["settlements", vars.expense_id] })
     },
   })

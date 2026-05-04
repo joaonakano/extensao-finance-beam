@@ -66,7 +66,7 @@ export function useDeleteExpense(userId: number) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => window.api.expenses.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses", userId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses"] }),
   })
 }
 
@@ -74,6 +74,6 @@ export function useTogglePaid(userId: number) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => window.api.expenses.togglePaid(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses", userId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["expenses"] }),
   })
 }
