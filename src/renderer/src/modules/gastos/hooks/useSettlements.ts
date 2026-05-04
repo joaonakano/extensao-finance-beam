@@ -4,10 +4,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 export function useSettlements(expenseId: number | null) {
   const { data, isLoading } = useQuery({
     queryKey: ["settlements", expenseId],
-    queryFn: () => window.api.settlements.getByExpense(expenseId!),
+    queryFn: async () => {
+      const res = await window.api.settlements.getByExpense(expenseId!)
+      // O IPC retorna ApiResponse<T[]> — extrair .data
+      if (res && typeof res === "object" && "data" in res) return (res as any).data ?? []
+      return res ?? []
+    },
     enabled: expenseId != null,
   })
-  return { settlements: data ?? [], isLoading }
+  return { settlements: (data as any[]) ?? [], isLoading }
 }
 
 // Cria uma quitação
