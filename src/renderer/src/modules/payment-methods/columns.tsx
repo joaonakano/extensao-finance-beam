@@ -95,14 +95,14 @@ export const columns: ColumnDef<PaymentMethod>[] = [
                   className="w-full text-destructive focus:text-destructive"
                   onSelect={(e) => e.preventDefault()}
                 >
-                  Excluir
+                  Inativar
                 </DropdownMenuItem>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Tem Certeza?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Essa ação não poderá ser desfeita. O meio de pagamento será excluído permanentemente.
+                    Essa ação poderá ser revertida posteriormente. Apenas meios de pagamentos com a situação "Ativo" poderão ser utilizados na criação de novos gastos.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -111,12 +111,12 @@ export const columns: ColumnDef<PaymentMethod>[] = [
                     size="sm"
                   >Cancelar</AlertDialogCancel>
                   <AlertDialogAction
-                    variant="destructive"
+                
                     size="sm"
                     onClick={() => onDelete?.(pm)}
-                    className="bg-destructive text-white hover:bg-destructive/90"
+                   className="bg-orange-600 hover:bg-red-600 text-white"
                   >
-                    Excluir
+                    Inativar
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
