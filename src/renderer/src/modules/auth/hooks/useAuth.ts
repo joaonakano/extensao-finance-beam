@@ -12,7 +12,7 @@ export function useLogin(onSuccess: (user: AuthUser) => void) {
     mutationFn: async (data: LoginFormValues) => {
       const result = await window.api.auth.login(data.email, data.senha)
       if (!result?.success) throw new Error(result?.error ?? "E-mail ou senha incorretos.")
-      return result.user as AuthUser
+      return result.data as AuthUser
     },
     onSuccess,
   })

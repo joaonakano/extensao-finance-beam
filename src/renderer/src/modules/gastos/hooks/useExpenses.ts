@@ -4,9 +4,17 @@ import type { GastoFormValues } from "../schemas"
 export function useExpenses(userId: number) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["expenses", userId],
-    queryFn: () => window.api.expenses.getAll(userId),
+    queryFn: async () => {
+      const res = await window.api.expenses.getAll(userId)
+      return res
+    },
   })
-  return { expenses: data ?? [], isLoading, error }
+
+  const expenses = Array.isArray(data?.data)
+    ? data.data
+    : []
+
+  return { expenses, isLoading, error }
 }
 
 export function useChildExpenses(parentId: number | null) {
