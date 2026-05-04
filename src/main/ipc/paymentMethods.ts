@@ -1,5 +1,5 @@
 import { ipcMain } from "electron";
-import { db } from "../database/db";
+import { db } from "../db/db";
 import { ApiResponse } from "./types";
 
 export function registerPaymentMethodsHandlers() {
@@ -10,11 +10,10 @@ export function registerPaymentMethodsHandlers() {
                 SELECT *
                 FROM payment_methods
                 WHERE user_id = ?
-                AND status = 'ativo'
                 ORDER BY name ASC
             `).all(userId)
 
-            console.log("[IPC] getAll data:", data)
+            // console.log("[IPC] getAll data:", data)
             return { success: true, data }
         } catch (err) {
             console.error("[IPC] getAll erro:", err)
@@ -24,7 +23,7 @@ export function registerPaymentMethodsHandlers() {
 
     ipcMain.handle('paymentMethods:create', (_, pm: any) => {
         try {
-            console.log("pm recebido:", pm)
+            // console.log("pm recebido:", pm)
 
             const result = db.prepare(`
                 INSERT INTO payment_methods (user_id, name, type)
@@ -64,6 +63,8 @@ export function registerPaymentMethodsHandlers() {
 
     ipcMain.handle('paymentMethods:delete', (_, id: number): ApiResponse<null> => {
         try {
+            console.log("[IPC] delete chamado com id:", id, "tipo:", typeof id)
+            
             const result = db.prepare(`
                 UPDATE payment_methods
                 SET status = 'inativo'
@@ -73,6 +74,8 @@ export function registerPaymentMethodsHandlers() {
             if (result.changes === 0) {
                 return { success: false, error: 'Meio de pagamento não encontrado.' }
             }
+            
+            console.log("[IPC] delete chamado com id:", id, "tipo:", typeof id)
 
             return { success: true, data: null }
         } catch (err) {

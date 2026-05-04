@@ -1,5 +1,5 @@
 import { ipcMain } from "electron"
-import { db } from "../database/db"
+import { db } from "../db/db"
 import { ApiResponse } from "./types"
 
 
@@ -10,7 +10,7 @@ export function registerAuthHandlers() {
             const user = db.prepare(`
                 SELECT *
                 FROM users
-                WHERE email = ?AND senha = ?
+                WHERE email = ? AND senha = ?
             `).get(email, senha) as any
 
             if (!user) {

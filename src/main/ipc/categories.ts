@@ -1,5 +1,5 @@
 import { ipcMain } from "electron"
-import { db } from "../database/db"
+import { db } from "../db/db"
 import { ApiResponse } from "./types"
 
 export function registerCategoriesHandlers() {
