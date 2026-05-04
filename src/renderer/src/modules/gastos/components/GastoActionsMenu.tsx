@@ -43,7 +43,7 @@ export function GastoActionsMenu({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent>
-        <DropdownMenuLabel>{expense.description}</DropdownMenuLabel>
+        <DropdownMenuLabel>Ações</DropdownMenuLabel>
         <DropdownMenuSeparator />
 
         {/* Adicionar sub-gasto — só gastos raiz */}
