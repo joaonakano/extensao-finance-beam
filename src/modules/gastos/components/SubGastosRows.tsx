@@ -1,9 +1,8 @@
-import { Loader2, Trash2, Pencil, Banknote, CheckCircle2, Circle } from "lucide-react"
+import { Loader2, CheckCircle2, Circle } from "lucide-react"
 import { TableRow, TableCell } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useChildExpenses } from "../hooks/useExpenses"
+import { GastoActionsMenu } from "./GastoActionsMenu"
 
 interface Props {
   parentId: number
@@ -46,7 +45,7 @@ export function SubGastosRows({ parentId, deletingId, onDelete, onEdit, onQuitac
           key={child.id}
           className={`bg-muted/30 border-l-2 border-l-primary/20 ${child.is_paid ? "opacity-60" : ""}`}
         >
-          {/* Célula vazia — alinha com a coluna expand/collapse do pai */}
+          {/* Célula vazia — alinha com coluna expand/collapse do pai */}
           <TableCell />
 
           {/* Toggle pago */}
@@ -67,7 +66,7 @@ export function SubGastosRows({ parentId, deletingId, onDelete, onEdit, onQuitac
             {new Date(child.date).toLocaleDateString("pt-BR")}
           </TableCell>
 
-          {/* Descrição com indentação visual */}
+          {/* Descrição */}
           <TableCell className="text-sm">
             <span className="text-muted-foreground mr-1.5 select-none">└</span>
             <span className="font-medium">{child.description}</span>
@@ -108,54 +107,16 @@ export function SubGastosRows({ parentId, deletingId, onDelete, onEdit, onQuitac
               : <Badge variant="destructive" className="text-xs">Pendente</Badge>}
           </TableCell>
 
-          {/* Ações */}
-          <TableCell>
-            <div className="flex items-center justify-center gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => onQuitacao(child)}
-                    className="text-muted-foreground hover:text-amber-600"
-                  >
-                    <Banknote className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Registrar quite</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => onEdit(child)}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <Pencil className="size-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Editar sub-gasto</TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => onDelete(child.id)}
-                    disabled={deletingId === child.id}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    {deletingId === child.id
-                      ? <Loader2 className="size-3.5 animate-spin" />
-                      : <Trash2 className="size-3.5" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Excluir sub-gasto</TooltipContent>
-              </Tooltip>
-            </div>
+          {/* Menu de contexto — isChild omite "Adicionar sub-gasto" */}
+          <TableCell className="text-center">
+            <GastoActionsMenu
+              expense={child}
+              isChild
+              isDeleting={deletingId === child.id}
+              onQuitacao={onQuitacao}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
           </TableCell>
         </TableRow>
       ))}

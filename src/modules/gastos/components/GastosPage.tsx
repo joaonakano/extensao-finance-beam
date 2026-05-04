@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Plus, Trash2, CheckCircle2, Circle, Loader2, Pencil, Banknote, ChevronDown, ChevronRight } from "lucide-react"
+import { Plus, CheckCircle2, Circle, Loader2, ChevronDown, ChevronRight } from "lucide-react"
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +15,7 @@ import { EditGastoForm } from "./EditGastoForm"
 import { QuitacaoDialog } from "./QuitacaoDialog"
 import { NovoGastoFilhoDialog } from "./NovoGastoFilhoDialog"
 import { SubGastosRows } from "./SubGastosRows"
+import { GastoActionsMenu } from "./GastoActionsMenu"
 
 interface Props {
   userId: number
@@ -30,7 +31,6 @@ export function GastosPage({ userId }: Props) {
   const [quitacaoExpense, setQuitacaoExpense] = useState<any | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
 
-  // US018: expand/collapse e adicionar filho
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
   const [addingChildFor, setAddingChildFor] = useState<any | null>(null)
 
@@ -159,7 +159,7 @@ export function GastosPage({ userId }: Props) {
                 <TableHead>Pagamento</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
                 <TableHead className="text-center">Status</TableHead>
-                <TableHead className="w-36 text-center">Ações</TableHead>
+                <TableHead className="w-14 text-center">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -176,12 +176,11 @@ export function GastosPage({ userId }: Props) {
 
                   return (
                     <>
-                      {/* Linha principal */}
                       <TableRow
                         key={expense.id}
                         className={expense.is_paid ? "opacity-60" : ""}
                       >
-                        {/* Botão expand/collapse — US018 */}
+                        {/* Expand/collapse */}
                         <TableCell className="pr-0">
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -191,10 +190,9 @@ export function GastosPage({ userId }: Props) {
                                   flex items-center justify-center size-6 rounded transition-colors
                                   ${hasChildren
                                     ? "text-primary hover:bg-primary/10"
-                                    : "text-muted-foreground/30 hover:text-muted-foreground hover:bg-muted cursor-default"
+                                    : "text-muted-foreground/30 cursor-default"
                                   }
                                 `}
-                                title={isExpanded ? "Recolher sub-gastos" : "Expandir sub-gastos"}
                               >
                                 {isExpanded
                                   ? <ChevronDown className="size-3.5" />
@@ -266,81 +264,23 @@ export function GastosPage({ userId }: Props) {
                             : <Badge variant="destructive">Pendente</Badge>}
                         </TableCell>
 
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-1">
-
-                            {/* Botão Adicionar Sub-gasto — US018 */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => {
-                                    setAddingChildFor(expense)
-                                    setExpandedIds((prev) => new Set([...prev, expense.id]))
-                                  }}
-                                  className="text-muted-foreground hover:text-primary"
-                                >
-                                  <Plus className="size-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Adicionar sub-gasto</TooltipContent>
-                            </Tooltip>
-
-                            {/* Botão Quite */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => setQuitacaoExpense(expense)}
-                                  className="text-muted-foreground hover:text-amber-600"
-                                  title="Registrar quite"
-                                >
-                                  <Banknote className="size-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Registrar quite</TooltipContent>
-                            </Tooltip>
-
-                            {/* Botão Editar */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => handleEdit(expense)}
-                                  className="text-muted-foreground hover:text-foreground"
-                                >
-                                  <Pencil className="size-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Editar gasto</TooltipContent>
-                            </Tooltip>
-
-                            {/* Botão Excluir */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => handleDelete(expense.id)}
-                                  disabled={deletingId === expense.id}
-                                  className="text-muted-foreground hover:text-destructive"
-                                >
-                                  {deletingId === expense.id
-                                    ? <Loader2 className="size-3.5 animate-spin" />
-                                    : <Trash2 className="size-3.5" />}
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Excluir gasto</TooltipContent>
-                            </Tooltip>
-
-                          </div>
+                        {/* Menu de contexto — GastoActionsMenu */}
+                        <TableCell className="text-center">
+                          <GastoActionsMenu
+                            expense={expense}
+                            isDeleting={deletingId === expense.id}
+                            onAddChild={(exp) => {
+                              setAddingChildFor(exp)
+                              setExpandedIds((prev) => new Set([...prev, exp.id]))
+                            }}
+                            onQuitacao={setQuitacaoExpense}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                          />
                         </TableCell>
                       </TableRow>
 
-                      {/* Linhas filhas — US018 */}
+                      {/* Linhas filhas */}
                       {isExpanded && (
                         <SubGastosRows
                           key={`children-${expense.id}`}
@@ -369,7 +309,7 @@ export function GastosPage({ userId }: Props) {
           onOpenChange={(open) => { if (!open) setQuitacaoExpense(null) }}
         />
 
-        {/* Dialog de Novo Sub-gasto — US018 */}
+        {/* Dialog de Novo Sub-gasto */}
         {addingChildFor && (
           <NovoGastoFilhoDialog
             userId={userId}
