@@ -1,79 +1,78 @@
 import { ipcMain } from "electron";
-import { db } from "../db/db";
+import { db } from "@main/db/db";
 
-import { IPCResponse, Settlement } from "@shared/types";
-
+import { CreateRequest, Expense, GetByIdRequest, IPCResponse, Settlement } from "@shared/types";
 
 export function registerSettlementsHandlers() {
 
-    ipcMain.handle('settlements:getByExpense', (_, expenseId: number): IPCResponse<any[]> => {
+    ipcMain.handle('settlements:getByExpense', async (_, request: GetByIdRequest): Promise<IPCResponse<Settlement[]>> => {
         try {
+            if (!request.id || typeof request.id !== 'number') {
+                return { success: false, error: 'ID da despesa inválido.' };
+            }
+
             const data = db.prepare(`
                 SELECT *
                 FROM settlements
-                WHERE expense_id = ?
+                WHERE expense_id = @id AND user_id = @user_id
                 ORDER BY payment_date ASC
-            `).all(expenseId)
+            `).all(request) as Settlement[]
 
-            return { success: true, data }
+            return { success: true, data: data ?? [] }
         } catch (err) {
-            console.error('settlements:getByExpense error', err)
+            console.error('[IPC] getByExpense error:', err)
             return { success: false, error: 'Erro ao buscar quitações.' }
         }
     })
 
-    ipcMain.handle('settlements:create', (_, settlement: Settlement): IPCResponse<{ id: number }> => {
-        try {
-            // Busca o total original e o total já pago
+    ipcMain.handle('settlements:create', async (_, request: CreateRequest<Settlement>): Promise<IPCResponse<number>> => {
+
+        const createSettlementTx = db.transaction((data: CreateRequest<Settlement>) => {
             const expense = db.prepare(`
-                SELECT total
+                SELECT amount
                 FROM expenses
-                WHERE id = ?
-            `).get(settlement.expense_id) as any
+                WHERE id = @expense_id AND user_id = @user_id
+            `).get(data) as Pick<Expense, 'amount'> | undefined
 
-            if (!expense) { 
-                return { success: false, error: 'Despesa não encontrada.' }
+            if (!expense) {
+                throw new Error('Despesa não encontrada.');
             }
 
-
-            const paidSoFar = (db.prepare(`
-                SELECT COALESCE(SUM(amount_paid), 0) AS total
+            const resultPaid = db.prepare(`
+                SELECT COALESCE(SUM(amount_paid), 0) AS amount
                 FROM settlements
-                WHERE expense_id = ?
-            `).get(settlement.expense_id) as any).total
+                WHERE expense_id = @expense_id AND user_id = @user_id
+            `).get(data) as { amount: number }
 
-            const remaining = expense.total - paidSoFar
+            const paidSoFar = resultPaid.amount
+            const remaining = expense.amount - paidSoFar
 
-            if (settlement.amount_paid > remaining + 0.001) {
-                return {
-                    success: false,
-                    error: `Valor superior ao saldo restante (R$ ${remaining.toFixed(2)}).`
-                }
+            if (data.amount_paid > remaining + 0.01) {
+                throw new Error(`Valor superior ao saldo restante (Saldo: R$ ${remaining.toFixed(2)}).`);
             }
 
-
-            const result = db.prepare(`
+            const insert = db.prepare(`
                 INSERT INTO settlements (expense_id, amount_paid, payment_date)
-                VALUES (@expense_id, @amount_paid, @payment_date)
-            `).run(settlement)
+                VALUES (@expense_id, @amount_paid, @payment_date)    
+            `).run(data)
 
-            // Se quita totalmente, marca a despesa como paga
-            const newPaid = paidSoFar + settlement.amount_paid
-
-            if (newPaid >= expense.total - 0.001) {
+            const totalAfterThis = paidSoFar + data.amount_paid
+            if (totalAfterThis >= expense.amount - 0.01) {
                 db.prepare(`
                     UPDATE expenses
                     SET is_paid = 1
-                    WHERE id = ?
-                `).run(settlement.expense_id)
+                    WHERE id = @expense_id AND user_id = @user_id
+                `).run(data)
             }
 
-            return {
-                success: true,
-                data: { id: Number(result.lastInsertRowid) }
-            }
+            return Number(insert.lastInsertRowid)
+        })
+        
+        try {
+            const newId = createSettlementTx(request)
+            return { success: true, data: newId }
         } catch (err) {
-            console.error('settlements:create error', err)
+            console.error('[IPC] create error:', err)
             return { success: false, error: 'Erro ao registrar quitação.' }
         }
     })

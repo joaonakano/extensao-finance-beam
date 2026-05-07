@@ -1,10 +1,10 @@
 import { ipcMain } from "electron";
-import { db } from "../db/db";
-import { ApiResponse } from "./types";
+import { db } from "@main/db/db";
+import { GetRequest, IPCResponse } from "@shared/types";
 
 export function registerExpensesHandlers() {
 
-    ipcMain.handle('expenses:getAll', (_, userId: number): ApiResponse<any[]> => {
+    ipcMain.handle('expenses:getAll', (_, request: GetRequest): IPCResponse<any[]> => {
         try {
             const data = db.prepare(`
                 SELECT
@@ -22,10 +22,10 @@ export function registerExpensesHandlers() {
                 LEFT JOIN categories c ON e.category_id = c.id
                 LEFT JOIN payment_methods p ON e.payment_method_id = p.id
                 LEFT JOIN settlements s ON e.id = s.expense_id
-                WHERE e.user_id = ? AND e.parent_id IS NULL
+                WHERE e.user_id = @user_id AND e.parent_id IS NULL
                 GROUP BY e.id
                 ORDER BY e.date DESC, e.created_at DESC
-            `).all(userId)
+            `).all(request)
         
             return { success: true, data }
         } catch (err) {
@@ -34,7 +34,7 @@ export function registerExpensesHandlers() {
         }
     })
 
-    ipcMain.handle('expenses:getChildrenByParent', (_, parentId: number): ApiResponse<any[]> => {
+    ipcMain.handle('expenses:getChildrenByParent', (_, parentId: number): IPCResponse<any[]> => {
         try {
             const data = db.prepare(`
                 SELECT
@@ -63,7 +63,7 @@ export function registerExpensesHandlers() {
         }
     })
 
-    ipcMain.handle('expenses:getById', (_, id: number): ApiResponse<any> => {
+    ipcMain.handle('expenses:getById', (_, id: number): IPCResponse<any> => {
         try {
             const data = db.prepare(`
                 SELECT *
@@ -82,7 +82,7 @@ export function registerExpensesHandlers() {
         }
     })
 
-    ipcMain.handle('expenses:create', (_, expense: any): ApiResponse<{ id: number }> => {
+    ipcMain.handle('expenses:create', (_, expense: any): IPCResponse<{ id: number }> => {
         try {
             const result = db.prepare(`
                 INSERT INTO expenses (user_id, description, total, category_id, payment_method_id, date, is_paid, is_recurring, parent_id)
@@ -99,7 +99,7 @@ export function registerExpensesHandlers() {
         }
     })
 
-    ipcMain.handle('expenses:update', (_, expense: any): ApiResponse<null> => {
+    ipcMain.handle('expenses:update', (_, expense: any): IPCResponse<null> => {
         try {
             const result = db.prepare(`
                 UPDATE expenses
@@ -124,7 +124,7 @@ export function registerExpensesHandlers() {
         }
     })
 
-    ipcMain.handle('expenses:togglePaid', (_, id: number): ApiResponse<null> => {
+    ipcMain.handle('expenses:togglePaid', (_, id: number): IPCResponse<null> => {
         try {
             const result = db.prepare(`
                 UPDATE expenses
@@ -143,7 +143,7 @@ export function registerExpensesHandlers() {
         }
     })
 
-    ipcMain.handle('expenses:delete', (_, id: number): ApiResponse<null> => {
+    ipcMain.handle('expenses:delete', (_, id: number): IPCResponse<null> => {
         try {
             const result = db.prepare(`
                 DELETE FROM expenses

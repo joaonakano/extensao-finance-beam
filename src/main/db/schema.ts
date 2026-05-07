@@ -50,11 +50,13 @@ export function setupSchema() {
 
     CREATE TABLE IF NOT EXISTS settlements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
       expense_id INTEGER NOT NULL,
       amount_paid REAL NOT NULL,
       payment_date TEXT NOT NULL,
       created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
+      FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     );
   `)
 

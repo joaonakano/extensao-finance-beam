@@ -1,11 +1,11 @@
 import { ipcMain } from "electron"
 import { db } from "../db/db"
-import { ApiResponse } from "./types"
+import { IPCResponse } from "@shared/types"
 
 
 export function registerAuthHandlers() {
 
-    ipcMain.handle('auth:login', (_, email: string, senha: string): ApiResponse<any> => {
+    ipcMain.handle('auth:login', (_, email: string, senha: string): IPCResponse<any> => {
         try {
             const user = db.prepare(`
                 SELECT *
@@ -31,7 +31,7 @@ export function registerAuthHandlers() {
         }
     })
 
-    ipcMain.handle('auth:register', (_, nome: string, email: string, senha: string): ApiResponse<{ id: number}> => {
+    ipcMain.handle('auth:register', (_, nome: string, email: string, senha: string): IPCResponse<{ id: number}> => {
         try {
             const result = db.prepare(`
                 INSERT INTO users (nome, email, senha)
@@ -87,7 +87,7 @@ export function registerAuthHandlers() {
         }
     })
 
-    ipcMain.handle('auth:checkEmail', (_, email: string): ApiResponse<{ exists: boolean }> => {
+    ipcMain.handle('auth:checkEmail', (_, email: string): IPCResponse<{ exists: boolean }> => {
         try {
             const user = db.prepare(`
                 SELECT id

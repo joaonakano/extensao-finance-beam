@@ -16,5 +16,3 @@ export interface PaymentMethod {
     type: PaymentMethodType,
     status: PaymentMethodStatus,
 }
-
-export type CreatePaymentMethodInput = Omit<PaymentMethod, 'id' | 'status'>

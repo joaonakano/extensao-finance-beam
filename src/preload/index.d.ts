@@ -1,5 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { CreateSettlementInput, IPCResponse, PaymentMethod } from '@shared/types'
+import { Category, CreateRequest, DeleteRequest, GetByIdRequest, GetRequest, IPCResponse, PaymentMethod, Settlement, UpdateRequest } from '@shared/types'
 
 export interface IApi {
   auth: {
@@ -17,19 +17,21 @@ export interface IApi {
     delete: (id: number) => Promise<any>,
   },
   categories: {
-    getAll: (userId: number) => Promise<any[]>,
-    create: (category: any) => Promise<any>,
-    delete: (id: number) => Promise<any>,
+    getAll: (request: GetRequest) => Promise<IPCResponse<Category[]>>,
+    create: (request: CreateRequest<Category>) => Promise<IPCResponse<number>>,
+    update: (request: UpdateRequest<Category>) => Promise<IPCResponse<null>>
+    delete: (request: DeleteRequest) => Promise<IPCResponse<null>>,
   },
   paymentMethods: {
-    getAll: (userId: number) => Promise<IPCResponse<PaymentMethod[]>>,
-    create: (paymentMethod: CreatePaymentMethodInput) => Promise<IPCResponse<number>>,
-    update: (paymentMethod: PaymentMethod) => Promise<IPCResponse<null>>,
-    delete: (id: number) => Promise<IPCResponse<null>>,
+    getAll: (request: GetRequest) => Promise<IPCResponse<PaymentMethod[]>>,
+    getById: (request: GetByIdRequest) => Promise<IPCResponse<PaymentMethod>>,
+    create: (request: CreateRequest<PaymentMethod>) => Promise<IPCResponse<number>>,
+    update: (request: UpdateRequest<PaymentMethod>) => Promise<IPCResponse<null>>,
+    delete: (request: DeleteRequest) => Promise<IPCResponse<null>>,
   },
   settlements: {
-    getByExpenses: (expenseId: number) => IPCResponse<any[]>,
-    create: (settlement: CreateSettlementInput) => IPCResponse<{ id: number }>,
+    getByExpenses: (request: GetByIdRequest) => Promise<IPCResponse<Settlement[]>>,
+    create: (request: CreateRequest<Settlement>) => Promise<IPCResponse<number>>,
   },
 }
 

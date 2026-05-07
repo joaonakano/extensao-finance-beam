@@ -36,10 +36,16 @@ const api = {
       ipcRenderer.invoke('categories:delete', id),
   },
   paymentMethods: {
-      getAll: (userId: number) => ipcRenderer.invoke('paymentMethods:getAll', userId),
-      create: (data: any) => ipcRenderer.invoke('paymentMethods:create', data),
-      update: (data: any) => ipcRenderer.invoke('paymentMethods:update', data),
-      delete: (id: number) => ipcRenderer.invoke('paymentMethods:delete', id),
+      getAll: (userId: number) =>
+        ipcRenderer.invoke('paymentMethods:getAll', userId),
+      getById: (id: number) =>
+        ipcRenderer.invoke('paymentMethods:getById', id),
+      create: (data: any) =>
+        ipcRenderer.invoke('paymentMethods:create', data),
+      update: (data: any) =>
+        ipcRenderer.invoke('paymentMethods:update', data),
+      delete: (id: number) =>
+        ipcRenderer.invoke('paymentMethods:delete', id),
   },
   settlements: {
     getByExpense: (expenseId: number) =>
