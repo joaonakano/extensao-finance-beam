@@ -1,0 +1,50 @@
+# === DEPENDÊNCIAS ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# === BUILDS E SAÍDAS ===
+# Pasta onde o Electron Forge gera os executáveis e instaladores
+out/
+# Pasta de build do Vite/Webpack
+dist/
+# Pasta de cache do Electron Forge
+.vite/
+.webpack/
+# Arquivos de metadados de build
+.tsbuildinfo
+
+# === BANCO DE DADOS LOCAL ===
+# IMPORTANTE: Não envie o banco de dados de teste ou produção para o GitHub
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+# Se o seu arquivo de banco for exatamente 'finance.db' como configurado:
+finance.db
+
+# === AMBIENTE E SEGREDOS ===
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# === SISTEMA OPERACIONAL ===
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# === LOGS E CACHE ===
+logs
+*.log
+.eslintcache
+.stylelintcache
+
+dist/
+out/
+.vite/
+*.db/
