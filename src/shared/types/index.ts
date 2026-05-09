@@ -1,11 +1,15 @@
-// Padrão de resposta do banco para o React
-export type IpcResponse<T> = 
-    | { success: true, data: T }
-    | { success: false, error: string };
+export * from './base/ipc-response'
+export * from './base/expense-status'
+export * from './base/payment-method-type'
+export * from './base/user-type'
 
-// Tipos Utilitários
-export type CreateResponse = IpcResponse<{ id: number }>;
+export * from './entities/user'
+export * from './entities/category'
+export * from './entities/payment-method'
+export * from './entities/expense'
+export * from './entities/settlement'
 
-export * from "./auth"
-// export * from "./expenses"
-// export * from "./settings"
+export * from './dto/category.dto'
+export * from './dto/expense.dto'
+export * from './dto/settlement.dto'
+export * from './dto/auth.dto'
