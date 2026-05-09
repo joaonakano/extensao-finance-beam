@@ -45,7 +45,7 @@ app.whenReady().then(() => {
   // Inicializando a Database e os Handlers
   setupSchema()
   seedDatabase()
-  // registerIpcHandlers()
+  registerIpcHandlers()
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')

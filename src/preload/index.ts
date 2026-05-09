@@ -1,57 +1,92 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { Api, IPC_CHANNELS } from '@shared/ipc'
 
 // Custom APIs for renderer
-const api = {
+const api: Api = {
   auth: {
-    login: (email: string, senha: string) =>
-      ipcRenderer.invoke('auth:login', email, senha),
-    register: (nome: string, email: string, senha: string) =>
-      ipcRenderer.invoke('auth:register', nome, email, senha),
-    checkEmail: (email: string) =>
-      ipcRenderer.invoke('auth:checkEmail', email),
+    login: (data) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH_LOGIN, data),
+
+    register: (data) =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH_REGISTER, data),
+
+    logout: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH_LOGOUT),
+
+    me: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.AUTH_ME)
   },
-  expenses: {
-    getAll: (userId: number) =>
-      ipcRenderer.invoke('expenses:getAll', userId),
-    getChildrenByParent: (parentId: number) =>
-      ipcRenderer.invoke('expenses:getChildrenByParent', parentId),
-    getById: (id: number) =>
-      ipcRenderer.invoke('expenses:getById', id),
-    create: (expense: any) =>
-      ipcRenderer.invoke('expenses:create', expense),
-    update: (expense: any) =>
-      ipcRenderer.invoke('expenses:update', expense),
-    togglePaid: (id: number) =>
-      ipcRenderer.invoke('expenses:togglePaid', id),
-    delete: (id: number) =>
-      ipcRenderer.invoke('expenses:delete', id),
-  },
+
   categories: {
-    getAll: (userId: number) =>
-      ipcRenderer.invoke('categories:getAll', userId),
-    create: (category: any) =>
-      ipcRenderer.invoke('categories:create', category),
-    delete: (id: number) =>
-      ipcRenderer.invoke('categories:delete', id),
+    getAll: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.CATEGORIES_GET_ALL),
+
+    getById: (id) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CATEGORIES_GET_BY_ID, id),
+
+    create: (data) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CATEGORIES_CREATE, data),
+
+    update: (data) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CATEGORIES_UPDATE, data),
+
+    delete: (id) =>
+      ipcRenderer.invoke(IPC_CHANNELS.CATEGORIES_DELETE, id),
   },
+
   paymentMethods: {
-      getAll: (userId: number) =>
-        ipcRenderer.invoke('paymentMethods:getAll', userId),
-      getById: (id: number) =>
-        ipcRenderer.invoke('paymentMethods:getById', id),
-      create: (data: any) =>
-        ipcRenderer.invoke('paymentMethods:create', data),
-      update: (data: any) =>
-        ipcRenderer.invoke('paymentMethods:update', data),
-      delete: (id: number) =>
-        ipcRenderer.invoke('paymentMethods:delete', id),
+    getAll: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.PAYMENT_METHODS_GET_ALL),
+    
+    getById: (id) =>
+      ipcRenderer.invoke(IPC_CHANNELS.PAYMENT_METHODS_GET_BY_ID, id),
+
+    create: (data) =>
+      ipcRenderer.invoke(IPC_CHANNELS.PAYMENT_METHODS_CREATE, data),
+
+    update: (data) =>
+      ipcRenderer.invoke(IPC_CHANNELS.PAYMENT_METHODS_UPDATE, data),
+
+    delete: (id) =>
+      ipcRenderer.invoke(IPC_CHANNELS.PAYMENT_METHODS_DELETE, id),
   },
+
+  expenses: {
+    getAll: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.EXPENSES_GET_ALL),
+
+    getById: (id) =>
+      ipcRenderer.invoke(IPC_CHANNELS.EXPENSES_GET_BY_ID, id),
+
+    getChildren: (parentId) =>
+      ipcRenderer.invoke(
+        IPC_CHANNELS.EXPENSES_GET_CHILDREN,
+        parentId
+      ),
+
+    create: (data) =>
+      ipcRenderer.invoke(IPC_CHANNELS.EXPENSES_CREATE, data),
+
+    update: (data) =>
+      ipcRenderer.invoke(IPC_CHANNELS.EXPENSES_UPDATE, data),
+
+    delete: (id) =>
+      ipcRenderer.invoke(IPC_CHANNELS.EXPENSES_DELETE, id),
+  },
+  
   settlements: {
-    getByExpense: (expenseId: number) =>
-      ipcRenderer.invoke('settlements:getByExpense', expenseId),
-    create: (settlement: any) =>
-      ipcRenderer.invoke('settlements:create', settlement),
+    getByExpense: (expenseId) =>
+      ipcRenderer.invoke(
+        IPC_CHANNELS.SETTLEMENTS_GET_BY_EXPENSE,
+        expenseId
+      ),
+
+    create: (data) =>
+      ipcRenderer.invoke(
+        IPC_CHANNELS.SETTLEMENTS_CREATE,
+        data
+      ),
   },
 }
 

@@ -1,5 +1,5 @@
-import { registerAuthHandlers } from "./auth";
-import { registerCategoriesHandlers } from "./categories";
+import { registerAuthHandlers } from "./auth.handlers";
+import { registerCategoriesHandlers } from "./category.handlers";
 import { registerExpensesHandlers } from "./expenses";
 import { registerPaymentMethodsHandlers } from "./paymentMethods";
 import { registerSettlementsHandlers } from "./settlements";
