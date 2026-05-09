@@ -56,17 +56,23 @@ function RoutesApp() {
 }
 
 function App(): React.JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+
+  // return (
+  //   <QueryClientProvider client={queryClient}>
+  //     <AuthProvider>
+  //       <HashRouter>
+  //         <RoutesApp />
+  //         <Toaster />
+  //       </HashRouter>
+  //     </AuthProvider>
+  //   </QueryClientProvider>
+  // )
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <HashRouter>
-          <RoutesApp />
-          <Toaster />
-        </HashRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+    <h1>
+      Teste
+    </h1>
   )
 }
 

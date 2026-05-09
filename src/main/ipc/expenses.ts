@@ -1,10 +1,10 @@
 import { ipcMain } from "electron";
 import { db } from "@main/db/db";
-import { GetRequest, IPCResponse } from "@shared/types";
+import { CreateRequest, Expense, GetByIdRequest, GetRequest, IPCResponse, SubExpenseView } from "@shared/types";
 
 export function registerExpensesHandlers() {
 
-    ipcMain.handle('expenses:getAll', (_, request: GetRequest): IPCResponse<any[]> => {
+    ipcMain.handle('expenses:getAll', async (_, request: GetRequest): Promise<IPCResponse<Expense[]>> => {
         try {
             const data = db.prepare(`
                 SELECT
@@ -14,8 +14,8 @@ export function registerExpensesHandlers() {
                     p.name  AS payment_method_name,
                     COALESCE(SUM(s.amount_paid), 0) AS amount_paid,
                     CASE 
-                        WHEN COALESCE(SUM(s.amount_paid), 0) >= e.total THEN 0
-                        ELSE e.total - COALESCE(SUM(s.amount_paid), 0)
+                        WHEN COALESCE(SUM(s.amount_paid), 0) >= e.amount THEN 0
+                        ELSE e.amount - COALESCE(SUM(s.amount_paid), 0)
                     END AS remaining_amount,
                     (SELECT COUNT(*) FROM expenses ch WHERE ch.parent_id = e.id) AS children_count
                 FROM expenses e
@@ -25,16 +25,16 @@ export function registerExpensesHandlers() {
                 WHERE e.user_id = @user_id AND e.parent_id IS NULL
                 GROUP BY e.id
                 ORDER BY e.date DESC, e.created_at DESC
-            `).all(request)
+            `).all(request) as Expense[]
         
-            return { success: true, data }
+            return { success: true, data: data ?? [] }
         } catch (err) {
-            console.error('expenses:getAll error', err)
+            console.error('[IPC] expenses:getAll error:', err)
             return { success: false, error: 'Erro ao buscar despesas.' }
         }
     })
 
-    ipcMain.handle('expenses:getChildrenByParent', (_, parentId: number): IPCResponse<any[]> => {
+    ipcMain.handle('expenses:getChildrenByParent', async (_, request: GetByIdRequest): Promise<IPCResponse<SubExpenseView[]>> => {
         try {
             const data = db.prepare(`
                 SELECT
@@ -44,32 +44,32 @@ export function registerExpensesHandlers() {
                     p.name  AS payment_method_name,
                     COALESCE(SUM(s.amount_paid), 0) AS amount_paid,
                     CASE 
-                        WHEN COALESCE(SUM(s.amount_paid), 0) >= e.total THEN 0
-                        ELSE e.total - COALESCE(SUM(s.amount_paid), 0)
+                        WHEN COALESCE(SUM(s.amount_paid), 0) >= e.amount THEN 0
+                        ELSE e.amount - COALESCE(SUM(s.amount_paid), 0)
                     END AS remaining_amount
                 FROM expenses e
                 LEFT JOIN categories c ON e.category_id = c.id
                 LEFT JOIN payment_methods p ON e.payment_method_id = p.id
                 LEFT JOIN settlements s ON e.id = s.expense_id
-                WHERE e.parent_id = ?
+                WHERE e.parent_id = @id AND e.user_id = @user_id
                 GROUP BY e.id
                 ORDER BY e.date ASC, e.created_at ASC
-            `).all(parentId)
+            `).all(request) as SubExpenseView[]
 
-            return { success: true, data }
+            return { success: true, data: data ?? [] }
         } catch (err) {
-            console.error('expenses:getChildrenByParent error', err)
+            console.error('[IPC] expenses:getChildrenByParent error:', err)
             return { success: false, error: 'Erro ao buscar sub-despesas.' }
         }
     })
 
-    ipcMain.handle('expenses:getById', (_, id: number): IPCResponse<any> => {
+    ipcMain.handle('expenses:getById', async (_, request: GetByIdRequest): Promise<IPCResponse<Expense>> => {
         try {
             const data = db.prepare(`
                 SELECT *
                 FROM expenses
-                WHERE id = ?
-            `).get(id)
+                WHERE id = @id AND user_id = @user_id
+            `).get(request)
 
             if (!data) {
                 return { success: false, error: 'Despesa não encontrada.' }
@@ -77,17 +77,36 @@ export function registerExpensesHandlers() {
 
             return { success: true, data }
         } catch (err) {
-            console.error('expenses:getById error', err)
+            console.error('[IPC] expenses:getById error:', err)
             return { success: false, error: 'Erro ao buscar despesa.' }
         }
     })
 
-    ipcMain.handle('expenses:create', (_, expense: any): IPCResponse<{ id: number }> => {
+    ipcMain.handle('expenses:create', async (_, request: CreateRequest<Expense>): Promise<IPCResponse<Number>> => {
         try {
             const result = db.prepare(`
-                INSERT INTO expenses (user_id, description, total, category_id, payment_method_id, date, is_paid, is_recurring, parent_id)
-                VALUES (@user_id, @description, @total, @category_id, @payment_method_id, @date, @is_paid, @is_recurring, @parent_id)
-            `).run({ parent_id: null, ...expense })
+                INSERT INTO expenses (
+                    user_id,
+                    description,
+                    total,
+                    category_id,
+                    payment_method_id,
+                    date,
+                    is_paid,
+                    is_recurring,
+                    parent_id
+                ) VALUES (
+                    @user_id,
+                    @description,
+                    @total,
+                    @category_id,
+                    @payment_method_id,
+                    @date,
+                    @is_paid,
+                    @is_recurring,
+                    @parent_id
+                )
+            `).run({ parent_id: null, ...request })
 
             return {
                 success: true,

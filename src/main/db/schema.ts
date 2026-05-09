@@ -1,87 +1,128 @@
 import { db } from "./db"
 
+/**
+ * Cria as tabelas necessárias no banco de dados.
+ */
 export function setupSchema() {
   db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
+    -- Suporte a chaves estrangeiras pro SQLite
+    PRAGMA foreign_keys = ON;
+
+    -- Tabela de Tipos de Usuários
+    CREATE TABLE IF NOT EXISTS user_types (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      senha TEXT NOT NULL,
-      created_at TEXT DEFAULT (datetime('now'))
+      name TEXT UNIQUE NOT NULL
     );
 
+    -- Tabela de Usuários
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_type_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_type_id) REFERENCES user_types(id)
+    );
+
+    -- Tabela de Categorias
     CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
       name TEXT NOT NULL,
-      color TEXT NOT NULL DEFAULT '#6366f1',
-      status TEXT NOT NULL DEFAULT 'ativo',
+      color TEXT DEFAULT '#808080',
+      icon TEXT,
+      status TEXT DEFAULT 'ativo',
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
+    -- Tabela Meios de Pagamento
     CREATE TABLE IF NOT EXISTS payment_methods (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
       name TEXT NOT NULL,
-      type TEXT NOT NULL DEFAULT 'outro',
-      status TEXT NOT NULL DEFAULT 'ativo',
+      type TEXT NOT NULL,
+      status TEXT DEFAULT 'ativo',
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
+    -- Tabela de Gastos
     CREATE TABLE IF NOT EXISTS expenses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
-      description TEXT NOT NULL,
-      total REAL NOT NULL,
+      parent_id INTEGER DEFAULT NULL,
       category_id INTEGER,
       payment_method_id INTEGER,
+      description TEXT NOT NULL,
+
+      -- Armazenam-se os centavos em um inteiro para melhor precisão, R$ 10,35 = 1035
+      amount INTEGER NOT NULL DEFAULT 0,
+
       date TEXT NOT NULL,
       is_paid INTEGER NOT NULL DEFAULT 0,
-      is_recurring INTEGER NOT NULL DEFAULT 0,
-      parent_id INTEGER DEFAULT NULL,
+      notes TEXT,
       created_at TEXT DEFAULT (datetime('now')),
+
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (category_id) REFERENCES categories(id),
-      FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id),
+      FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+      FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id) ON DELETE SET NULL,
       FOREIGN KEY (parent_id) REFERENCES expenses(id) ON DELETE CASCADE
     );
 
+    -- Tabela de Quitações (Pagamentos Reais)
     CREATE TABLE IF NOT EXISTS settlements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
       expense_id INTEGER NOT NULL,
-      amount_paid REAL NOT NULL,
+
+      amount_paid INTEGER NOT NULL DEFAULT 0,
+
       payment_date TEXT NOT NULL,
       created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE,
+
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    );
+      FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
+    )
   `)
+}
 
-  // Migration: adiciona parent_id se não existir (bancos já criados)
-  const cols = db.prepare("PRAGMA table_info(expenses)").all() as any[]
-  if (!cols.find((c) => c.name === 'parent_id')) {
-    db.exec("ALTER TABLE expenses ADD COLUMN parent_id INTEGER DEFAULT NULL REFERENCES expenses(id) ON DELETE CASCADE")
-  }
+/**
+ * Popula o banco com dados iniciais obrigatórios.
+ * Roda apenas se as tabelas estiverem vazias.
+ */
+export function seedDatabase() {
+  // Inserir os tipos de usuário padrão
+  const userTypes = ['admin', 'financeiro', 'funcionario'];
 
-  // Seed: usuário demo
-  const demoUser = db.prepare('SELECT id FROM users WHERE email = ?').get('demo@finance.com')
-  if (!demoUser) {
-    const userId = db.prepare(
-      "INSERT INTO users (nome, email, senha) VALUES ('Usuário Demo', 'demo@finance.com', '123456')"
-    ).run().lastInsertRowid
+  const insertType = db.prepare('INSERT OR IGNORE INTO user_types (name) VALUES (?)');
 
-    db.prepare("INSERT INTO categories (user_id, name, color) VALUES (?, 'Alimentação', '#f97316')").run(userId)
-    db.prepare("INSERT INTO categories (user_id, name, color) VALUES (?, 'Transporte', '#3b82f6')").run(userId)
-    db.prepare("INSERT INTO categories (user_id, name, color) VALUES (?, 'Lazer', '#8b5cf6')").run(userId)
-    db.prepare("INSERT INTO categories (user_id, name, color) VALUES (?, 'Saúde', '#10b981')").run(userId)
-    db.prepare("INSERT INTO categories (user_id, name, color) VALUES (?, 'Moradia', '#f59e0b')").run(userId)
+  // Transação para performance e integridade dos dados
+  const runSeed = db.transaction(() => {
+    for (const type of userTypes) {
+      insertType.run(type)
+    }
 
-    db.prepare("INSERT INTO payment_methods (user_id, name, type) VALUES (?, 'Dinheiro', 'dinheiro')").run(userId)
-    db.prepare("INSERT INTO payment_methods (user_id, name, type) VALUES (?, 'Pix', 'pix')").run(userId)
-    db.prepare("INSERT INTO payment_methods (user_id, name, type) VALUES (?, 'Cartão de Crédito', 'cartao_credito')").run(userId)
-    db.prepare("INSERT INTO payment_methods (user_id, name, type) VALUES (?, 'Cartão de Débito', 'cartao_debito')").run(userId)
-  }
+    // Criar usuário administrador de testes se não existir
+    const adminExists = db.prepare('SELECT id FROM users WHERE email = ?').get('admin@email.com');
+
+    if (!adminExists) {
+      const tempPassword = 'admin123';
+
+      db.prepare(`
+        INSERT INTO users (user_type_id, name, email, password)
+        VALUES (
+          (SELECT id FROM user_types WHERE name = 'admin'),
+          'Administrador',
+          'admin@email.com',
+          ?
+        )
+      `).run(tempPassword);
+
+      console.log('Usuário administrador de teste criado.')
+    }
+  });
+
+  runSeed();
 }
