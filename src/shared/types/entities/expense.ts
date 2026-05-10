@@ -17,7 +17,7 @@ export interface Expense {
 
     status: ExpenseStatus
 
-    is_group: 0 | 1
+    isGroup: 0 | 1
 
     recurrenceGroupId: number | null
 

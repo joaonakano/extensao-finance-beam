@@ -2,6 +2,7 @@ import { ExpenseStatus } from "../base/expense-status"
 
 export interface CreateExpenseDTO {
     parentId?: number | null
+    
     categoryId?: number | null
     paymentMethodId?: number | null
 
