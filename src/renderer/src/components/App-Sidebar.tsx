@@ -67,10 +67,10 @@ export function AppSidebar() {
         <div className="flex items-center justify-between px-2 py-1">
           <div className="flex items-center gap-2 min-w-0">
             <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
-              {user?.nome?.charAt(0) ?? "U"}
+              {user?.name?.charAt(0) ?? "U"}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium leading-tight">{user?.nome ?? "Usuário"}</p>
+              <p className="truncate text-sm font-medium leading-tight">{user?.name ?? "Usuário"}</p>
               <p className="truncate text-xs text-muted-foreground">{user?.email ?? ""}</p>
             </div>
           </div>

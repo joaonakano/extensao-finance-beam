@@ -1,30 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { handleApi } from "@/services/api"
+import type { Settlement, CreateSettlementDTO } from "@/env"
 
-// Busca todas as quitações de uma despesa
 export function useSettlements(expenseId: number | null) {
   const { data, isLoading } = useQuery({
     queryKey: ["settlements", expenseId],
-    queryFn: async () => {
-      const res = await window.api.settlements.getByExpense(expenseId!)
-      // O IPC retorna ApiResponse<T[]> — extrair .data
-      if (res && typeof res === "object" && "data" in res) return (res as any).data ?? []
-      return res ?? []
-    },
+    queryFn: () => handleApi(window.api.settlements.getByExpense(expenseId!)),
     enabled: expenseId != null,
   })
-  return { settlements: (data as any[]) ?? [], isLoading }
+  return { settlements: (data ?? []) as Settlement[], isLoading }
 }
 
-// Cria uma quitação
-export function useCreateSettlement(userId: number) {
+export function useCreateSettlement(_userId: number) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (settlement: { expense_id: number; amount_paid: number; payment_date: string }) =>
-      window.api.settlements.create(settlement),
-    onSuccess: (_data, vars) => {
-      // Invalida todas as queries de expenses (pai e filhos) e settlements
+    mutationFn: (settlement: CreateSettlementDTO & { parentId?: number | null }) => {
+      const { parentId: _p, ...dto } = settlement
+      return handleApi(window.api.settlements.create(dto))
+    },
+    onSuccess: (_data, { expenseId, parentId }) => {
       qc.invalidateQueries({ queryKey: ["expenses"] })
-      qc.invalidateQueries({ queryKey: ["settlements", vars.expense_id] })
+      qc.invalidateQueries({ queryKey: ["settlements", expenseId] })
+      if (parentId) {
+        qc.invalidateQueries({ queryKey: ["expenses", "children", parentId] })
+      }
     },
   })
 }

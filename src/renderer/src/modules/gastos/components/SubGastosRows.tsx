@@ -3,111 +3,78 @@ import { TableRow, TableCell } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { useChildExpenses } from "../hooks/useExpenses"
 import { GastoActionsMenu } from "./GastoActionsMenu"
+import type { Expense } from "@/env"
 
 interface Props {
   parentId: number
   userId: number
   deletingId: number | null
   onDelete: (id: number) => void
-  onEdit: (expense: any) => void
-  onQuitacao: (expense: any) => void
-  onTogglePaid: (id: number) => void
+  onEdit: (expense: Expense) => void
+  onQuitacao: (expense: Expense) => void
+  onTogglePaid: (id: number, currentStatus: string) => void
 }
 
 export function SubGastosRows({ parentId, deletingId, onDelete, onEdit, onQuitacao, onTogglePaid }: Props) {
   const { children, isLoading } = useChildExpenses(parentId)
 
-  if (isLoading) {
-    return (
-      <TableRow>
-        <TableCell colSpan={9} className="py-2 pl-12 text-muted-foreground text-sm">
-          <Loader2 className="size-3.5 animate-spin inline mr-2" />
-          Carregando sub-gastos...
-        </TableCell>
-      </TableRow>
-    )
-  }
+  if (isLoading) return (
+    <TableRow><TableCell colSpan={9} className="py-2 pl-12 text-muted-foreground text-sm">
+      <Loader2 className="size-3.5 animate-spin inline mr-2" />Carregando sub-gastos...
+    </TableCell></TableRow>
+  )
 
-  if (children.length === 0) {
-    return (
-      <TableRow>
-        <TableCell colSpan={9} className="py-2 pl-12 text-muted-foreground text-sm italic">
-          Nenhum sub-gasto cadastrado.
-        </TableCell>
-      </TableRow>
-    )
-  }
+  if (children.length === 0) return (
+    <TableRow><TableCell colSpan={9} className="py-2 pl-12 text-muted-foreground text-sm italic">
+      Nenhum sub-gasto cadastrado.
+    </TableCell></TableRow>
+  )
 
   return (
     <>
-      {children.map((child: any) => (
-        <TableRow
-          key={child.id}
-          className={`bg-muted/30 border-l-2 border-l-primary/20 ${child.is_paid ? "opacity-60" : ""}`}
-        >
-          {/* Célula vazia — alinha com coluna expand/collapse do pai */}
+      {children.map((child) => (
+        <TableRow key={child.id} className={`bg-muted/30 border-l-2 border-l-primary/20 ${child.status === "pago" ? "opacity-60" : ""}`}>
           <TableCell />
 
-          {/* Toggle pago */}
           <TableCell>
-            <button
-              onClick={() => onTogglePaid(child.id)}
-              title={child.is_paid ? "Marcar como pendente" : "Marcar como pago"}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {child.is_paid
+            <button onClick={() => onTogglePaid(child.id, child.status)}
+              title={child.status === "pago" ? "Marcar como pendente" : "Marcar como pago"}
+              className="text-muted-foreground hover:text-foreground transition-colors">
+              {child.status === "pago"
                 ? <CheckCircle2 className="size-3.5 text-green-500" />
                 : <Circle className="size-3.5" />}
             </button>
           </TableCell>
 
-          {/* Data */}
           <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-            {new Date(child.date).toLocaleDateString("pt-BR")}
+            {child.dueDate ? new Date(child.dueDate).toLocaleDateString("pt-BR") : "—"}
           </TableCell>
 
-          {/* Descrição */}
           <TableCell className="text-sm">
             <span className="text-muted-foreground mr-1.5 select-none">└</span>
             <span className="font-medium">{child.description}</span>
-            {child.is_recurring ? (
-              <Badge variant="outline" className="ml-2 text-xs">Recorrente</Badge>
-            ) : null}
+            {child.installmentNumber && (
+              <Badge variant="outline" className="ml-2 text-xs">
+                {child.installmentNumber}/{child.installmentTotal}
+              </Badge>
+            )}
           </TableCell>
 
-          {/* Categoria */}
-          <TableCell>
-            <span className="flex items-center gap-1.5 text-xs">
-              <span style={{ color: child.category_color }}>●</span>
-              {child.category_name}
-            </span>
-          </TableCell>
+          <TableCell className="text-xs text-muted-foreground">{(child as any).categoryName ?? "—"}</TableCell>
+          <TableCell className="text-xs text-muted-foreground">{(child as any).paymentMethodName ?? "—"}</TableCell>
 
-          {/* Pagamento */}
-          <TableCell className="text-xs text-muted-foreground">
-            {child.payment_method_name}
-          </TableCell>
-
-          {/* Valor */}
           <TableCell className="text-right font-semibold tabular-nums text-sm">
-            <div className="flex flex-col items-end gap-0.5">
-              <span>R$ {Number(child.remaining_amount ?? child.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-              {child.amount_paid > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  (+R$ {Number(child.amount_paid).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} pago)
-                </span>
-              )}
-            </div>
+            R$ {Number(child.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
           </TableCell>
 
-          {/* Status */}
           <TableCell className="text-center">
-            {child.is_paid
+            {child.status === "pago"
               ? <Badge className="bg-green-500 hover:bg-green-600 text-xs">Pago</Badge>
+              : child.status === "parcial"
+              ? <Badge className="bg-yellow-500 hover:bg-yellow-600 text-xs">Parcial</Badge>
               : <Badge variant="destructive" className="text-xs">Pendente</Badge>}
           </TableCell>
 
-          {/* Menu de contexto — isChild omite "Adicionar sub-gasto" */}
           <TableCell className="text-center">
             <GastoActionsMenu
               expense={child}

@@ -28,7 +28,7 @@ export function LoginPage({ onLogin }: Props) {
   })
 
   const { mutate: login, isPending } = useLogin((user) => {
-    toast.success(`Bem-vindo, ${user.nome}!`)
+    toast.success(`Bem-vindo, ${user.name}!`)
     onLogin(user)
     navigate("/gastos")
   })

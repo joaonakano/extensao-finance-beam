@@ -1,66 +1,35 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-
-import { CreatePaymentMethod, PaymentMethod, UpdatePaymentMethod } from "../schema"
 import { handleApi } from "@/services/api"
+import type { PaymentMethod } from "@/env"
+import type { CreatePaymentMethod, UpdatePaymentMethod } from "../schema"
 
-export function usePaymentMethods(userId: number) {
-    const queryClient = useQueryClient()
+const QUERY_KEY = ["payment-methods"]
 
-    const queryKey = ["payment-methods", userId]
+export function usePaymentMethods(_userId?: number) {
+  const queryClient = useQueryClient()
 
-    // GET
-const query = useQuery({
-    queryKey,
-    queryFn: () =>
-        handleApi<PaymentMethod[]>(
-            window.api.paymentMethods.getAll(userId)
-        )
-})
+  const query = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: () => handleApi<PaymentMethod[]>(window.api.paymentMethods.getAll()),
+  })
 
-    console.log("[hook] query.data:", query.data)
-    console.log("[hook] query.status:", query.status)
-    console.log("[hook] query.fetchStatus:", query.fetchStatus)
-    console.log("[hook] query.error:", query.error)
+  const create = useMutation({
+    mutationFn: (data: CreatePaymentMethod) =>
+      handleApi(window.api.paymentMethods.create(data)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  })
 
-    // CREATE
-    const create = useMutation({
-        mutationFn: (data: CreatePaymentMethod) => 
-           handleApi(
-            window.api.paymentMethods.create(data)
-           ),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey })
-        }
-    })
+  const update = useMutation({
+    mutationFn: (data: UpdatePaymentMethod) =>
+      handleApi(window.api.paymentMethods.update(data)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  })
 
-    // UPDATE
-    const update = useMutation({
-        mutationFn: (data: UpdatePaymentMethod) => 
-            handleApi(
-                window.api.paymentMethods.update(data)
-            ),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey })
-        }
-    })
-    
-    // DELETE
-    const remove = useMutation({
-        mutationFn: (id: number) => {
-            console.log("[mutation delete] id enviado:", id, "tipo:", typeof id)
-            return handleApi(
-                window.api.paymentMethods.delete(id)
-            )
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey })
-        }
-    })
+  const remove = useMutation({
+    mutationFn: (id: number) =>
+      handleApi(window.api.paymentMethods.delete(id)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+  })
 
-    return {
-        ...query,
-        create,
-        update,
-        remove
-    }
+  return { ...query, create, update, remove }
 }

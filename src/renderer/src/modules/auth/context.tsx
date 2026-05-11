@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode } from "react"
 
 export interface AuthUser {
   id: number
-  nome: string
+  name: string
   email: string
 }
 

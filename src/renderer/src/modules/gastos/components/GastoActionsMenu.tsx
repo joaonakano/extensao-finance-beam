@@ -11,13 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 interface Props {
-  expense: any
+  expense: import("@/env").Expense
   /** Quando true, oculta "Adicionar sub-gasto" (linhas filhas) */
   isChild?: boolean
   isDeleting?: boolean
-  onAddChild?: (expense: any) => void
-  onQuitacao: (expense: any) => void
-  onEdit: (expense: any) => void
+  onAddChild?: (expense: import("@/env").Expense) => void
+  onQuitacao: (expense: import("@/env").Expense) => void
+  onEdit: (expense: import("@/env").Expense) => void
   onDelete: (id: number) => void
 }
 

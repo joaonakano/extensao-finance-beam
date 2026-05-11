@@ -226,7 +226,7 @@ export function DashboardPage({ userId }: Props) {
                   </TableHeader>
                   <TableBody>
                     {stats.recent.map((e: any) => (
-                      <TableRow key={e.id} className={e.is_paid ? "opacity-60" : ""}>
+                      <TableRow key={e.id} className={e.status === "pago" ? "opacity-60" : ""}>
                         <TableCell className="font-medium text-sm">{e.description}</TableCell>
                         <TableCell>
                           <span className="flex items-center gap-1.5 text-sm">
@@ -238,7 +238,7 @@ export function DashboardPage({ userId }: Props) {
                           {fmt(Number(e.total))}
                         </TableCell>
                         <TableCell className="text-center">
-                          {e.is_paid
+                          {e.status === "pago"
                             ? <Badge className="bg-green-500 hover:bg-green-600 text-xs">Pago</Badge>
                             : <Badge variant="destructive" className="text-xs">Pendente</Badge>}
                         </TableCell>

@@ -1,13 +1,18 @@
 /// <reference types="vite/client" />
 
-import type { ElectronAPI } from '@electron-toolkit/preload'
-import { Api } from "@shared/ipc"
+// Re-exporta os tipos compartilhados para uso no renderer
+export type { Api } from '../../shared/ipc/api'
+export type {
+  User, Category, PaymentMethod, Expense, Settlement,
+  CreateExpenseDTO, UpdateExpenseDTO, CreateSettlementDTO,
+  LoginDTO, RegisterDTO, CreateCategoryDTO, UpdateCategoryDTO,
+} from '../../shared/types'
+export type { IPCResponse } from '../../shared/types/base/ipc-response'
+export type { ExpenseStatus } from '../../shared/types/base/expense-status'
 
 declare global {
   interface Window {
-    electron: ElectronAPI
-    api: Api
+    api: import('../../shared/ipc/api').Api
+    electron: any
   }
 }
-
-export {}

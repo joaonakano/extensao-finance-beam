@@ -59,7 +59,7 @@ export function registerAuthHandlers() {
             try {
                 const existingUser = AuthRepository.findByEmail(data.email)
                 
-                if (!existingUser) {
+                if (existingUser) {
                     return {
                         success: false,
                         error: 'Email já cadastrado.'

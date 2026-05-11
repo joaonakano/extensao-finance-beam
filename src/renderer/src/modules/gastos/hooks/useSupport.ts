@@ -1,27 +1,19 @@
 import { useQuery } from "@tanstack/react-query"
+import { handleApi } from "@/services/api"
+import type { Category, PaymentMethod } from "@/env"
 
-export function useCategories(userId: number) {
+export function useCategories(_userId?: number) {
   const { data, isLoading } = useQuery({
-    queryKey: ["categories", userId],
-    queryFn: async () => {
-      const res = await window.api.categories.getAll(userId)
-      // O IPC retorna ApiResponse<T[]> — extrair .data
-      if (res && typeof res === "object" && "data" in res) return (res as any).data ?? []
-      return res ?? []
-    },
+    queryKey: ["categories"],
+    queryFn: () => handleApi(window.api.categories.getAll()),
   })
-  return { categories: (data as any[]) ?? [], isLoading }
+  return { categories: (data ?? []) as Category[], isLoading }
 }
 
-export function usePaymentMethods(userId: number) {
+export function usePaymentMethods(_userId?: number) {
   const { data, isLoading } = useQuery({
-    queryKey: ["paymentMethods", userId],
-    queryFn: async () => {
-      const res = await window.api.paymentMethods.getAll(userId)
-      // O IPC retorna ApiResponse<T[]> — extrair .data
-      if (res && typeof res === "object" && "data" in res) return (res as any).data ?? []
-      return res ?? []
-    },
+    queryKey: ["paymentMethods"],
+    queryFn: () => handleApi(window.api.paymentMethods.getAll()),
   })
-  return { paymentMethods: (data as any[]) ?? [], isLoading }
+  return { paymentMethods: (data ?? []) as PaymentMethod[], isLoading }
 }
