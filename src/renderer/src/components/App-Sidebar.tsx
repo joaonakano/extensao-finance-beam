@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-import { useAuth } from "@/modules/auth/context"
+import { useAuth } from "@features/auth/context"
 import { LayoutDashboard, Receipt, Wallet, LogOut } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 
