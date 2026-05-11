@@ -241,7 +241,7 @@ export function seedDatabase() {
         )
       `).run(tempPassword);
 
-      console.log('Usuário administrador de teste criado.')
+      console.log(`Usuário administrador de teste criado.\b* user: admin@email.com\b* password: ${tempPassword}`)
     }
   });
 
