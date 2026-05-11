@@ -8,8 +8,8 @@ import { CadastroPage } from "@features/auth/components/CadastroPage"
 import { DashboardPage } from "@features/dashboard/components/DashboardPage"
 import { GastosPage } from "@features/gastos/components/GastosPage"
 import { PagamentosPage } from "@features/payment-methods/pages/PagamentosPage"
-import { ProtectedRoute } from "./components/ProtectedRoute"
-import { DashboardLayout } from "./components/DashboardLayout"
+import { ProtectedRoute } from "../components/ProtectedRoute"
+import { DashboardLayout } from "../components/DashboardLayout"
 
 const queryClient = new QueryClient({
   defaultOptions: {
