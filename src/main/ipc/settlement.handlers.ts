@@ -1,7 +1,10 @@
 import { ipcMain } from "electron";
+
 import { IPC_CHANNELS } from "@shared/ipc";
 import { IPCResponse, Settlement } from "@shared/types";
+
 import { requireAuth } from "./helpers/auth.helper";
+
 import { SettlementRepository } from "@main/repositories/settlement.repository";
 
 export function registerSettlementsHandlers() {

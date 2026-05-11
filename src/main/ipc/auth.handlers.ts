@@ -6,7 +6,9 @@ import type {
 } from "@shared/types"
 
 import { IPC_CHANNELS } from "@shared/ipc"
+
 import { AuthRepository } from "@main/repositories/auth.repository"
+
 import { getCurrentUser, setCurrentUser } from "@main/session/session.store"
 
 export function registerAuthHandlers() {

@@ -1,11 +1,11 @@
 import { ipcMain } from "electron"
 
-import { db } from "@main/db/db"
 import { IPC_CHANNELS } from "@shared/ipc"
 import { Category, IPCResponse } from "@shared/types"
-import { requireAuth } from "./helpers/auth.helper"
-import { CategoryRepository } from "@main/repositories/category.repository"
 
+import { requireAuth } from "./helpers/auth.helper"
+
+import { CategoryRepository } from "@main/repositories/category.repository"
 
 export function registerCategoriesHandlers() {
     ipcMain.handle(

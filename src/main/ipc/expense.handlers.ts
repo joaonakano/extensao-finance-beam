@@ -2,7 +2,9 @@ import { ipcMain } from "electron";
 
 import { IPC_CHANNELS } from "@shared/ipc";
 import { Expense, IPCResponse } from "@shared/types";
+
 import { requireAuth } from "./helpers/auth.helper";
+
 import { ExpenseRepository } from "@main/repositories/expense.repository";
 
 export function registerExpensesHandlers() {

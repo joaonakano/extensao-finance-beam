@@ -2,9 +2,10 @@ import { ipcMain } from "electron";
 
 import { IPC_CHANNELS } from "@shared/ipc";
 import { IPCResponse, PaymentMethod } from "@shared/types";
-import { requireAuth } from "./helpers/auth.helper";
-import { PaymentMethodRepository } from "@main/repositories/payment-method.repository";
 
+import { requireAuth } from "./helpers/auth.helper";
+
+import { PaymentMethodRepository } from "@main/repositories/payment-method.repository";
 
 export function registerPaymentMethodsHandlers() {
     
