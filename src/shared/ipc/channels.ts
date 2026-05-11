@@ -23,6 +23,9 @@ export const IPC_CHANNELS = {
   EXPENSES_UPDATE: 'expenses:update',
   EXPENSES_DELETE: 'expenses:delete',
 
+  SETTLEMENTS_GET_ALL: 'settlements:getAll',
+  SETTLEMENTS_GET_BY_ID: 'settlements:getById',
   SETTLEMENTS_GET_BY_EXPENSE: 'settlements:getByExpense',
   SETTLEMENTS_CREATE: 'settlements:create',
+  SETTLEMENTS_DELETE: 'settlements:delete'
 } as const

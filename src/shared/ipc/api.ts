@@ -99,6 +99,10 @@ export interface Api {
     }
 
     settlements: {
+        getAll: () => Promise<IPCResponse<Settlement[]>>
+
+        getById: (id: number) => Promise<IPCResponse<Settlement>>
+
         getByExpense(
             expenseId: number
         ): Promise<IPCResponse<Settlement[]>>
@@ -106,5 +110,7 @@ export interface Api {
         create(
             data: CreateSettlementDTO
         ): Promise<IPCResponse<number>>
+
+        delete: (id: number) => Promise<IPCResponse<void>>
     }
 }

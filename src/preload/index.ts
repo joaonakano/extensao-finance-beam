@@ -76,6 +76,12 @@ const api: Api = {
   },
   
   settlements: {
+    getAll: () =>
+      ipcRenderer.invoke(IPC_CHANNELS.SETTLEMENTS_GET_ALL),
+    
+    getById: (id) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SETTLEMENTS_GET_BY_ID, id),
+
     getByExpense: (expenseId) =>
       ipcRenderer.invoke(
         IPC_CHANNELS.SETTLEMENTS_GET_BY_EXPENSE,
@@ -87,6 +93,9 @@ const api: Api = {
         IPC_CHANNELS.SETTLEMENTS_CREATE,
         data
       ),
+
+    delete: (id) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SETTLEMENTS_DELETE, id),
   },
 }
 

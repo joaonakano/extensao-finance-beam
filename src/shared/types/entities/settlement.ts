@@ -6,7 +6,7 @@ export interface Settlement {
     amountPaid: number
     paymentDate: string
 
-    notes: string | null
+    notes?: string | null
 
     createdAt: string
 }

@@ -36,6 +36,19 @@ export class ExpenseRepository {
         return mapExpense(row as any)
     }
 
+    static updateStatus(
+        expenseId: number,
+        userId: number,
+        status: string
+    ) {
+        db.prepare(`
+            UPDATE expenses
+            SET status = ?
+            WHERE id = ?
+            AND user_id = ?
+        `).run(status, expenseId, userId)
+    }
+
     static getChildren(
         parentId: number,
         userId: number,
@@ -60,7 +73,7 @@ export class ExpenseRepository {
     ) {
         const result = db.
             prepare(`
-                INSERT INTO expeses (
+                INSERT INTO expenses (
                     user_id,
                     parent_id,
                     category_id,
