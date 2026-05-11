@@ -8,6 +8,7 @@
       "@renderer/*" : ["./src/renderer/src/*"],
       "@preload/*": ["./src/preload/*"],
       "@shared/*": ["./src/shared/*"],
+      "@features/*": ["./src/renderer/src/features/*"],
     }
   }
 }

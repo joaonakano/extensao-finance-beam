@@ -26,6 +26,7 @@ export default defineConfig({
         '@': resolve('src/renderer/src'),
         "@renderer": resolve('src/renderer/src'),
         "@shared": resolve('src/shared'),
+        "@features": resolve('src/renderer/src/features'),
       }
     },
     plugins: [react(), tailwindcss(),]
