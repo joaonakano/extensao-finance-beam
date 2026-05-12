@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { expensesApi } from "../api/expenses.api";
-import { Expense } from "@/env";
 
 /*
     REGRAS BÁSICAS PARA MELHOR ENTENDIMENTO DE ACTIONS, HOOKS E API
@@ -12,15 +11,10 @@ import { Expense } from "@/env";
     Hierarquia recomendada: UI > Actions/Hook > API > IPC > SQLite
 */
 
-export function useExpenses() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["expenses"],
-    queryFn: expensesApi.getAll,
-  })
-
-  return {
-    expenses: (data ?? []) as Expense[],
-    isLoading,
-    error,
-  }
+export function useExpense(id: number) {
+    return useQuery({
+        queryKey: ["expenses", id],
+        queryFn: () => expensesApi.getById(id),
+        enabled: !!id,
+    })
 }

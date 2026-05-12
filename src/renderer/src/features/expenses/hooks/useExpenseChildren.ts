@@ -12,15 +12,15 @@ import { Expense } from "@/env";
     Hierarquia recomendada: UI > Actions/Hook > API > IPC > SQLite
 */
 
-export function useExpenses() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["expenses"],
-    queryFn: expensesApi.getAll,
-  })
+export function useExpenseChildren(parentId: number | null) {
+    const { data, isLoading } = useQuery({
+        queryKey: ["expenses", "children", parentId],
+        queryFn: () => expensesApi.getChildren(parentId!),
+        enabled: parentId != null,
+    })
 
-  return {
-    expenses: (data ?? []) as Expense[],
-    isLoading,
-    error,
-  }
+    return {
+        children: (data ?? []) as Expense[],
+        isLoading,
+    }
 }
