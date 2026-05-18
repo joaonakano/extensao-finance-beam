@@ -1,7 +1,7 @@
 import { db } from "@main/db/db";
 import { mapUser } from "@main/mappers/user.mapper";
 
-import type { RegisterDTO, User } from "@shared/types";
+import type { RegisterDTO } from "@shared/types";
 
 export class AuthRepository {
     static findByEmail(email: string) {
