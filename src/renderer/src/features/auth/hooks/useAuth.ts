@@ -1,7 +1,8 @@
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import { handleApi } from "@/services/api"
 import type { AuthUser } from "../context"
 import type { LoginFormValues, CadastroFormValues } from "../schemas"
+import { authApi } from "../api/auth.api"
 
 /*
   RESPONSABILIDADES DO USEAUTH
@@ -12,6 +13,26 @@ import type { LoginFormValues, CadastroFormValues } from "../schemas"
     -> MANTER CACHE
 */
 
+export function useAuth() {
+  const {
+    data: user,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["auth"],
+    queryFn: authApi.me,
+    retry: false
+  })
+
+  return {
+    user: user ?? null,
+    isLoading,
+    error,
+    isAuthenticated: !!user,
+  }
+}
+
+// codigo antigo, pretendo remover
 export type { AuthUser }
 
 export function useLogin(onSuccess: (user: AuthUser) => void) {
