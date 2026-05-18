@@ -3,6 +3,15 @@ import { handleApi } from "@/services/api"
 import type { AuthUser } from "../context"
 import type { LoginFormValues, CadastroFormValues } from "../schemas"
 
+/*
+  RESPONSABILIDADES DO USEAUTH
+    -> OBTER USUÁRIO ATUAL
+    -> EXPOR LOADING
+    -> EXPOR AUTHENTICATED
+    -> EXPOR LOGOUT
+    -> MANTER CACHE
+*/
+
 export type { AuthUser }
 
 export function useLogin(onSuccess: (user: AuthUser) => void) {
