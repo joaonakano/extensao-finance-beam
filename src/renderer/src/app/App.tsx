@@ -7,7 +7,8 @@ import { LoginPage } from "@features/auth/components/LoginPage"
 import { CadastroPage } from "@features/auth/components/CadastroPage"
 import { DashboardPage } from "@features/dashboard/components/DashboardPage"
 import { PagamentosPage } from "@features/payment-methods/pages/PagamentosPage"
-import { ProtectedRoute } from "@/components/ProtectedRoute"
+// import { ProtectedRoute } from "@/components/ProtectedRoute"
+import { ProtectedRoute } from "@/app/router/ProtectedRoute"
 import { DashboardLayout } from "@/components/DashboardLayout"
 import { ExpensePage } from "@/features/expenses/pages/expense-dashboard.page"
 
@@ -36,8 +37,16 @@ function RoutesApp() {
           <DashboardLayout />
         </ProtectedRoute>
       }>
+
         <Route path="/dashboard" element={<DashboardPage userId={user?.id ?? 0} />} />
-        <Route path="/gastos" element={<ExpensePage />} />
+        
+        <Route path="/gastos" element={
+            <ProtectedRoute>
+              <ExpensePage />
+            </ProtectedRoute>
+          }
+        />
+        
         <Route path="/pagamentos" element={<PagamentosPage />} />
       </Route>
 
